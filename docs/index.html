@@ -131,7 +131,7 @@
 
       const rows = [...data].reverse().map(o => `
         <tr>
-          <td class="kw">${o.keyword}</td>
+          <td class="kw"><a href="https://www.amazon.com/s?k=${encodeURIComponent(o.keyword)}" target="_blank" style="color:#58a6ff;text-decoration:none;">${o.keyword}</a></td>
           <td>${o.product_count}</td>
           <td class="price">${o.avg_price}</td>
           <td>${o.opportunity_count}</td>
