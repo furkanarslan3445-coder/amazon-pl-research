@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Amazon PL Niche Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header h1 { font-size: 18px; font-weight: 600; color: #f0f6fc; }
+  .updated { font-size: 12px; color: #8b949e; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 24px 28px 0;
+  }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card .label { font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .card .value { font-size: 36px; font-weight: 700; color: #3fb950; }
+
+  .panel {
+    margin: 16px 28px 28px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #30363d;
+    font-size: 13px;
+    font-weight: 600;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: #161b22;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid #30363d;
+  }
+  tbody tr { border-bottom: 1px solid #21262d; transition: background .15s; }
+  tbody tr:hover { background: #1c2128; }
+  tbody td { padding: 13px 16px; font-size: 13px; }
+  .kw { font-weight: 500; color: #e6edf3; }
+  .price { color: #3fb950; font-weight: 600; }
+  .ratio { color: #58a6ff; font-weight: 600; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #1a4a2e;
+    color: #3fb950;
+    border: 1px solid #2ea043;
+  }
+  .empty { padding: 60px; text-align: center; color: #8b949e; font-size: 14px; }
+  .loading { padding: 60px; text-align: center; color: #8b949e; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🔍 Amazon PL Niche Araştırma</h1>
+  <span class="updated" id="updated"></span>
+</header>
+
+<div class="stats">
+  <div class="card">
+    <div class="label">Toplam Fırsat</div>
+    <div class="value" id="total">—</div>
+  </div>
+  <div class="card">
+    <div class="label">Son Güncelleme</div>
+    <div class="value" style="font-size:20px; padding-top:8px;" id="last-kw">—</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    ✅ Fırsatlar
+  </div>
+  <div id="content" class="loading">Yükleniyor...</div>
+</div>
+
+<script>
+  const JSON_URL = "https://raw.githubusercontent.com/furkanarslan3445-coder/amazon-pl-research/main/output/opportunities.json";
+
+  async function load() {
+    try {
+      const r = await fetch(JSON_URL + "?t=" + Date.now());
+      const data = await r.json();
+
+      document.getElementById('total').textContent = data.length;
+      document.getElementById('last-kw').textContent = data.length > 0 ? data[data.length-1].keyword : '—';
+      document.getElementById('updated').textContent = 'Son yenileme: ' + new Date().toLocaleTimeString('tr-TR');
+
+      if (data.length === 0) {
+        document.getElementById('content').innerHTML = '<div class="empty">Henüz fırsat bulunamadı...</div>';
+        return;
+      }
+
+      const rows = [...data].reverse().map(o => `
+        <tr>
+          <td class="kw">${o.keyword}</td>
+          <td>${o.product_count}</td>
+          <td class="price">${o.avg_price}</td>
+          <td>${o.opportunity_count}</td>
+          <td class="ratio">${o.ratio}</td>
+          <td><span class="badge">✅ GİRİLEBİLİR</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('content').innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Ürün Sayısı</th>
+              <th>Ort. Fiyat</th>
+              <th>Uygun Ürün</th>
+              <th>Oran</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    } catch(e) {
+      document.getElementById('content').innerHTML = '<div class="empty">Veri yüklenemedi.</div>';
+    }
+  }
+
+  load();
+  setInterval(load, 60000); // her dakika yenile
+</script>
+</body>
+</html>

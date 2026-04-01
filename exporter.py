@@ -1,4 +1,5 @@
 import os
+import subprocess
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from config import CONFIG
@@ -42,6 +43,33 @@ def _write_header(ws):
         ws.column_dimensions[col].width = 18
 
 
+def _save_json(ws):
+    import json
+    rows = []
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        if row[0]:
+            rows.append({
+                "keyword": row[0],
+                "product_count": row[1],
+                "avg_price": row[2],
+                "opportunity_count": row[3],
+                "ratio": row[4],
+            })
+    json_path = os.path.join(CONFIG["output_dir"], "opportunities.json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(rows, f, ensure_ascii=False, indent=2)
+
+
+def _git_push(path: str):
+    try:
+        json_path = os.path.join(CONFIG["output_dir"], "opportunities.json")
+        subprocess.run(["git", "add", path, json_path], check=True, capture_output=True)
+        subprocess.run(["git", "commit", "-m", "yeni fırsat eklendi"], check=True, capture_output=True)
+        subprocess.run(["git", "push"], check=True, capture_output=True)
+    except Exception:
+        pass
+
+
 def save_opportunity(result: dict):
     """Fırsat bulunan keyword'ü Excel'e ekle."""
     wb, ws, path = _get_or_create_wb()
@@ -65,3 +93,5 @@ def save_opportunity(result: dict):
         cell.font = Font(color="FFFFFFFF")
 
     wb.save(path)
+    _save_json(ws)
+    _git_push(path)
