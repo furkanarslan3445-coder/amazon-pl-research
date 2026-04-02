@@ -83,16 +83,19 @@
   .empty { padding: 60px; text-align: center; color: #8b949e; font-size: 14px; }
   .loading { padding: 60px; text-align: center; color: #8b949e; font-size: 14px; }
 
-  /* Yorum sistemi */
+  .kw-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .rating-dot { font-size: 16px; }
+
   .comment-btn {
     background: none;
     border: 1px solid #30363d;
     color: #8b949e;
-    padding: 3px 10px;
+    padding: 5px 12px;
     border-radius: 6px;
-    font-size: 11px;
+    font-size: 13px;
     cursor: pointer;
     transition: all .15s;
+    margin-top: 6px;
   }
   .comment-btn:hover { border-color: #58a6ff; color: #58a6ff; }
 
@@ -110,11 +113,26 @@
     font-size: 12px;
   }
   .comment-item:last-child { border-bottom: none; }
-  .comment-author { color: #58a6ff; font-weight: 600; margin-right: 8px; }
+  .comment-author { color: #58a6ff; font-weight: 600; margin-right: 6px; }
   .comment-text { color: #e6edf3; }
   .comment-date { color: #8b949e; font-size: 11px; margin-top: 2px; }
 
-  .comment-form { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .rating-btns { display: flex; gap: 6px; margin-bottom: 8px; }
+  .rating-btn {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .rating-btn:hover { border-color: #8b949e; }
+  .rating-btn.selected-good { border-color: #3fb950; background: #1a4a2e; }
+  .rating-btn.selected-mid  { border-color: #d29922; background: #2d2209; }
+  .rating-btn.selected-bad  { border-color: #f85149; background: #3d1212; }
+
+  .comment-form { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .comment-form input {
     background: #161b22;
     border: 1px solid #30363d;
@@ -142,7 +160,7 @@
 <body>
 
 <header>
-  <h1>🔍 Amazon PL Niche Araştırma</h1>
+  <h1>Amazon PL Niche Araştırma</h1>
   <span class="updated" id="updated"></span>
 </header>
 
@@ -158,7 +176,7 @@
 </div>
 
 <div class="panel">
-  <div class="panel-header">✅ Fırsatlar</div>
+  <div class="panel-header">Fırsatlar</div>
   <div id="content" class="loading">Yükleniyor...</div>
 </div>
 
@@ -170,6 +188,7 @@
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   let allComments = {};
+  let selectedRatings = {};
 
   async function loadComments() {
     const { data } = await sb.from("comments").select("*").order("created_at", { ascending: true });
@@ -182,38 +201,77 @@
     }
   }
 
+  function getLastRating(kw) {
+    const comments = allComments[kw] || [];
+    const withRating = comments.filter(c => c.rating);
+    if (withRating.length === 0) return null;
+    return withRating[withRating.length - 1].rating;
+  }
+
+  function ratingDot(rating) {
+    if (rating === 'good') return '<span class="rating-dot" title="Olumlu">🟢</span>';
+    if (rating === 'mid')  return '<span class="rating-dot" title="Kararsız">🟡</span>';
+    if (rating === 'bad')  return '<span class="rating-dot" title="Olumsuz">🔴</span>';
+    return '';
+  }
+
   function toggleComments(kw) {
-    const panel = document.getElementById("cp_" + btoa(kw).replace(/=/g,""));
+    const panel = document.getElementById("cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,""));
     if (!panel) return;
     panel.style.display = panel.style.display === "block" ? "none" : "block";
   }
 
-  async function addComment(kw, author, text) {
-    if (!author.trim() || !text.trim()) return;
-    await sb.from("comments").insert({ keyword: kw, author: author.trim(), comment: text.trim() });
+  function selectRating(kw, rating, btn) {
+    selectedRatings[kw] = rating;
+    const btns = btn.closest('.rating-btns').querySelectorAll('.rating-btn');
+    btns.forEach(b => b.className = 'rating-btn');
+    if (rating === 'good') btn.classList.add('selected-good');
+    if (rating === 'mid')  btn.classList.add('selected-mid');
+    if (rating === 'bad')  btn.classList.add('selected-bad');
+  }
+
+  async function addComment(kw, author, text, rating) {
+    if (!author.trim()) return;
+    await sb.from("comments").insert({
+      keyword: kw,
+      author: author.trim(),
+      comment: text.trim(),
+      rating: rating || null
+    });
     await loadComments();
     renderCommentPanel(kw);
+    // Rating dot güncelle
+    const id = "dot_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
+    const dotEl = document.getElementById(id);
+    if (dotEl) dotEl.innerHTML = ratingDot(getLastRating(kw));
   }
 
   function renderCommentPanel(kw) {
-    const id = "cp_" + btoa(kw).replace(/=/g,"");
+    const id = "cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
     const panel = document.getElementById(id);
     if (!panel) return;
     const comments = allComments[kw] || [];
     const list = comments.map(c => `
       <div class="comment-item">
         <span class="comment-author">${c.author}</span>
+        ${c.rating ? ratingDot(c.rating) : ''}
         <span class="comment-text">${c.comment}</span>
         <div class="comment-date">${new Date(c.created_at).toLocaleString('tr-TR')}</div>
       </div>
     `).join('') || '<div style="color:#8b949e;font-size:12px;padding:4px 0">Henüz yorum yok.</div>';
 
+    const kwEsc = kw.replace(/'/g,"\\'");
     panel.innerHTML = `
       <div>${list}</div>
+      <div class="rating-btns">
+        <button class="rating-btn" onclick="selectRating('${kwEsc}', 'good', this)">✅</button>
+        <button class="rating-btn" onclick="selectRating('${kwEsc}', 'mid', this)">➖</button>
+        <button class="rating-btn" onclick="selectRating('${kwEsc}', 'bad', this)">❌</button>
+      </div>
       <div class="comment-form">
         <input name="author" placeholder="İsmin" />
-        <input name="text" placeholder="Yorum yaz..." />
-        <button onclick="submitComment('${kw.replace(/'/g,"\\'")}', this)">Gönder</button>
+        <input name="text" placeholder="Yorum yaz... (opsiyonel)" />
+        <button onclick="submitComment('${kwEsc}', this)">Gönder</button>
       </div>
     `;
   }
@@ -222,9 +280,12 @@
     const form = btn.closest(".comment-form");
     const author = form.querySelector("[name=author]").value;
     const text = form.querySelector("[name=text]").value;
+    const rating = selectedRatings[kw] || null;
+    if (!author.trim()) { alert('İsmini yaz!'); return; }
     btn.disabled = true;
     btn.textContent = "...";
-    await addComment(kw, author, text);
+    await addComment(kw, author, text, rating);
+    selectedRatings[kw] = null;
     btn.disabled = false;
     btn.textContent = "Gönder";
   }
@@ -245,17 +306,20 @@
       }
 
       const rows = [...data].reverse().map(o => {
-        const id = "cp_" + btoa(o.keyword).replace(/=/g,"");
+        const id = btoa(unescape(encodeURIComponent(o.keyword))).replace(/=/g,"");
         const commentCount = (allComments[o.keyword] || []).length;
+        const lastRating = getLastRating(o.keyword);
         return `
           <tr>
             <td class="kw">
-              <a href="https://www.amazon.com/s?k=${encodeURIComponent(o.keyword)}" target="_blank" style="color:#58a6ff;text-decoration:none;">${o.keyword}</a>
-              <br>
+              <div class="kw-row">
+                <a href="https://www.amazon.com/s?k=${encodeURIComponent(o.keyword)}" target="_blank" style="color:#58a6ff;text-decoration:none;">${o.keyword}</a>
+                <span id="dot_${id}">${ratingDot(lastRating)}</span>
+              </div>
               <button class="comment-btn" onclick="toggleComments('${o.keyword.replace(/'/g,"\\'")}'); renderCommentPanel('${o.keyword.replace(/'/g,"\\'")}')">
-                Feedback ${commentCount > 0 ? '(' + commentCount + ')' : ''}
+                Feedback${commentCount > 0 ? ' (' + commentCount + ')' : ''}
               </button>
-              <div class="comment-panel" id="${id}"></div>
+              <div class="comment-panel" id="cp_${id}"></div>
             </td>
             <td>${o.product_count}</td>
             <td class="price">${o.avg_price}</td>
