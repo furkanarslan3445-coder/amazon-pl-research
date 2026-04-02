@@ -79,8 +79,14 @@ def _git_push(path: str):
         pass
 
 
+BLACKLIST = ["tablet", "ipad", "laptop", "phone", "smartphone", "iphone", "macbook"]
+
+
 def save_opportunity(result: dict):
     """Fırsat bulunan keyword'ü Excel'e ekle."""
+    kw = result["keyword"].lower()
+    if any(b in kw for b in BLACKLIST):
+        return
     wb, ws, path = _get_or_create_wb()
 
     status = "✅ GİRİLEBİLİR" if result["is_opportunity"] else "❌"
