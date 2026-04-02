@@ -253,7 +253,7 @@
               <a href="https://www.amazon.com/s?k=${encodeURIComponent(o.keyword)}" target="_blank" style="color:#58a6ff;text-decoration:none;">${o.keyword}</a>
               <br>
               <button class="comment-btn" onclick="toggleComments('${o.keyword.replace(/'/g,"\\'")}'); renderCommentPanel('${o.keyword.replace(/'/g,"\\'")}')">
-                💬 ${commentCount > 0 ? commentCount + ' yorum' : 'Yorum yaz'}
+                Feedback ${commentCount > 0 ? '(' + commentCount + ')' : ''}
               </button>
               <div class="comment-panel" id="${id}"></div>
             </td>
