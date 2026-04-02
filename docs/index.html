@@ -113,12 +113,13 @@
 </div>
 
 <script>
-  const JSON_URL = "https://raw.githubusercontent.com/furkanarslan3445-coder/amazon-pl-research/main/output/opportunities.json";
+  const JSON_URL = "https://api.github.com/repos/furkanarslan3445-coder/amazon-pl-research/contents/output/opportunities.json";
 
   async function load() {
     try {
-      const r = await fetch(JSON_URL + "?t=" + Date.now());
-      const data = await r.json();
+      const r = await fetch(JSON_URL, { headers: { "Cache-Control": "no-cache" } });
+      const resp = await r.json();
+      const data = JSON.parse(atob(resp.content));
 
       document.getElementById('total').textContent = data.length;
       document.getElementById('last-kw').textContent = data.length > 0 ? data[data.length-1].keyword : '—';
