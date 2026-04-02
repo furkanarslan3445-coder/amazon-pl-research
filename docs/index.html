@@ -119,7 +119,7 @@
     try {
       const r = await fetch(JSON_URL, { headers: { "Cache-Control": "no-cache" } });
       const resp = await r.json();
-      const data = JSON.parse(atob(resp.content));
+      const data = JSON.parse(atob(resp.content.replace(/\n/g, "")));
 
       document.getElementById('total').textContent = data.length;
       document.getElementById('last-kw').textContent = data.length > 0 ? data[data.length-1].keyword : '—';
