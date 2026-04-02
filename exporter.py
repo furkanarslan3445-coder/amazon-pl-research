@@ -47,12 +47,14 @@ def _save_json(ws):
     import json
     import glob
     rows = []
+    seen = set()
     # Tüm Excel dosyalarını oku
     for f in glob.glob(os.path.join(CONFIG["output_dir"], "*.xlsx")):
         try:
             wb = load_workbook(f)
             for row in wb.active.iter_rows(min_row=2, values_only=True):
-                if row[0]:
+                if row[0] and row[0] not in seen:
+                    seen.add(row[0])
                     rows.append({
                         "keyword": row[0],
                         "product_count": row[1],
