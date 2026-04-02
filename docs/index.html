@@ -300,7 +300,6 @@
       const data = await r.json();
       await loadComments();
 
-      document.getElementById('total').textContent = data.length;
       document.getElementById('last-kw').textContent = data.length > 0 ? data[data.length-1].keyword : '—';
       document.getElementById('updated').textContent = 'Son yenileme: ' + new Date().toLocaleTimeString('tr-TR');
 
@@ -309,7 +308,10 @@
         return;
       }
 
-      const rows = [...data].reverse().map(o => {
+      const filtered = [...data].reverse().filter(o => getLastRating(o.keyword) !== 'bad');
+      document.getElementById('total').textContent = filtered.length;
+
+      const rows = filtered.map(o => {
         const id = btoa(unescape(encodeURIComponent(o.keyword))).replace(/=/g,"");
         const commentCount = (allComments[o.keyword] || []).length;
         const lastRating = getLastRating(o.keyword);
