@@ -79,7 +79,8 @@ def _git_push(path: str):
         pass
 
 
-BLACKLIST = ["tablet", "ipad", "laptop", "phone", "smartphone", "iphone", "macbook"]
+BLACKLIST = ["tablet", "ipad", "laptop", "phone", "smartphone", "iphone", "macbook",
+             "minoxidil", "samsung", "3 days", "3 day"]
 
 
 def save_opportunity(result: dict):
