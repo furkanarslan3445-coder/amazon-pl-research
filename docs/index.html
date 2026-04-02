@@ -288,6 +288,10 @@
     selectedRatings[kw] = null;
     btn.disabled = false;
     btn.textContent = "Gönder";
+    // Paneli kapat
+    const id = "cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
+    const panel = document.getElementById(id);
+    if (panel) panel.style.display = "none";
   }
 
   async function load() {
