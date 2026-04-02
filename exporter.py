@@ -45,16 +45,23 @@ def _write_header(ws):
 
 def _save_json(ws):
     import json
+    import glob
     rows = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        if row[0]:
-            rows.append({
-                "keyword": row[0],
-                "product_count": row[1],
-                "avg_price": row[2],
-                "opportunity_count": row[3],
-                "ratio": row[4],
-            })
+    # Tüm Excel dosyalarını oku
+    for f in glob.glob(os.path.join(CONFIG["output_dir"], "*.xlsx")):
+        try:
+            wb = load_workbook(f)
+            for row in wb.active.iter_rows(min_row=2, values_only=True):
+                if row[0]:
+                    rows.append({
+                        "keyword": row[0],
+                        "product_count": row[1],
+                        "avg_price": row[2],
+                        "opportunity_count": row[3],
+                        "ratio": row[4],
+                    })
+        except Exception:
+            pass
     json_path = os.path.join(CONFIG["output_dir"], "opportunities.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(rows, f, ensure_ascii=False, indent=2)
