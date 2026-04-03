@@ -2,6 +2,7 @@ import json
 import signal
 import sys
 import time
+from datetime import date, datetime, timedelta
 from config import CONFIG, SEED_KEYWORDS
 from category_crawler import crawl_categories
 from autocomplete import expand_keywords
@@ -29,6 +30,28 @@ def handle_exit(sig, frame):
     sys.exit(0)
 
 
+def load_done(path: str) -> dict:
+    """Done listesini {keyword: tarih_str} formatında yükle.
+    Eski format (liste) ise bugünün tarihiyle migrate et."""
+    raw = load_json(path, {})
+    if isinstance(raw, list):
+        today = date.today().isoformat()
+        migrated = {kw: today for kw in raw}
+        save_json(path, migrated)
+        logger.info(f"Done listesi migrate edildi: {len(migrated)} keyword → tarih bazlı format.")
+        return migrated
+    return raw
+
+
+def is_due_for_rescan(scan_date_str: str, rescan_days: int) -> bool:
+    """Keyword'ün yeniden taranma zamanı geldi mi?"""
+    try:
+        scanned = datetime.fromisoformat(scan_date_str).date()
+        return (date.today() - scanned).days >= rescan_days
+    except Exception:
+        return True
+
+
 def build_keyword_pool() -> list[str]:
     """3 katmanlı keyword türetme."""
     logger.info("=== 3 Katmanlı Keyword Türetme Başlıyor ===")
@@ -50,8 +73,9 @@ def main():
 
     logger.info("Amazon PL Niche Bulucu başlatıldı.")
 
+    rescan_days = CONFIG.get("rescan_days", 90)
     pool = load_json(CONFIG["keywords_pool"], [])
-    done = set(load_json(CONFIG["keywords_done"], []))
+    done = load_done(CONFIG["keywords_done"])
 
     # İlk çalıştırma veya pool boşsa keyword türet
     if not pool:
@@ -64,30 +88,39 @@ def main():
 
     while True:
         cycle += 1
-        remaining = [kw for kw in pool if kw not in done]
-        logger.info(f"=== Döngü {cycle} | {len(remaining)} keyword kaldı ===")
+
+        # Taranmamış VEYA süresi dolmuş keyword'ler
+        remaining = [
+            kw for kw in pool
+            if kw not in done or is_due_for_rescan(done[kw], rescan_days)
+        ]
+        rescan_count = sum(1 for kw in remaining if kw in done)
+        new_count = len(remaining) - rescan_count
+        logger.info(
+            f"=== Döngü {cycle} | {len(remaining)} keyword kaldı "
+            f"({new_count} yeni, {rescan_count} yeniden tarama) ==="
+        )
 
         if not remaining:
-            logger.info("Tüm keyword'ler bitti. Yeni keyword türetiliyor...")
+            logger.info("Tüm keyword'ler güncel. Yeni keyword türetiliyor...")
             new_pool = build_keyword_pool()
-            # Havuza yeni keyword'leri ekle
-            new_kws = [kw for kw in new_pool if kw not in done]
+            new_kws = [kw for kw in new_pool if kw not in pool]
             pool.extend(new_kws)
             pool = list(set(pool))
             save_json(CONFIG["keywords_pool"], pool)
             logger.info(f"{len(new_kws)} yeni keyword eklendi.")
+            if not new_kws:
+                logger.info("Eklenecek yeni keyword yok, bekleniyor (1 saat)...")
+                time.sleep(3600)
             continue
 
         new_related = []
 
         for keyword in remaining:
-            if keyword in done:
-                continue
-
             # Ara
             result = search_keyword(keyword)
-            done.add(keyword)
-            save_json(CONFIG["keywords_done"], list(done))
+            done[keyword] = date.today().isoformat()
+            save_json(CONFIG["keywords_done"], done)
 
             # Katman 3: related searches'i havuza ekle
             for rs in result.get("related_searches", []):
