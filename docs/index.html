@@ -863,8 +863,10 @@
       // Sadece furkan kullanicisinin good ratinglerini al
       const furkanGood = comments.filter(c => c.author && c.author.toLowerCase() === 'furkan' && c.rating === 'good');
       if (furkanGood.length > 0) {
-        const lastComment = furkanGood[furkanGood.length - 1];
-        approvedKws.push({ ...o, comment: lastComment.comment || '', time: lastComment.created_at });
+        const lastGood = furkanGood[furkanGood.length - 1];
+        const furkanWithText = comments.filter(c => c.author && c.author.toLowerCase() === 'furkan' && c.comment && c.comment.trim() && c.rating !== 'clear' && c.comment !== 'Rating kaldirildi');
+        const bestComment = furkanWithText.length > 0 ? furkanWithText[furkanWithText.length - 1].comment : '';
+        approvedKws.push({ ...o, comment: bestComment, time: lastGood.created_at });
       }
     });
 
@@ -952,8 +954,10 @@
         keyword: kw, author: author.trim(), comment: 'Rating kaldirildi', rating: 'clear'
       });
     } else {
+      const comment = prompt('Aciklama (bos birakabilirsin):');
+      if (comment === null) return;
       await sb.from("comments").insert({
-        keyword: kw, author: author.trim(), comment: '', rating: rating
+        keyword: kw, author: author.trim(), comment: comment.trim(), rating: rating
       });
     }
     await loadComments();
@@ -1020,9 +1024,9 @@
     panel.innerHTML = `
       <div>${list}</div>
       <div class="rating-btns">
-        <button class="rating-btn ${getLastRating(kw)==='good'?'selected-good':''}" onclick="quickToggleRating('${kwEsc}', 'good', this)">&#x2705;</button>
-        <button class="rating-btn ${getLastRating(kw)==='mid'?'selected-mid':''}" onclick="quickToggleRating('${kwEsc}', 'mid', this)">&#x2796;</button>
-        <button class="rating-btn ${getLastRating(kw)==='bad'?'selected-bad':''}" onclick="quickToggleRating('${kwEsc}', 'bad', this)">&#x274C;</button>
+        <button class="rating-btn ${getLastRating(kw)==='good'?'selected-good':''}" onclick="selectRating('${kwEsc}', 'good', this)">&#x2705;</button>
+        <button class="rating-btn ${getLastRating(kw)==='mid'?'selected-mid':''}" onclick="selectRating('${kwEsc}', 'mid', this)">&#x2796;</button>
+        <button class="rating-btn ${getLastRating(kw)==='bad'?'selected-bad':''}" onclick="selectRating('${kwEsc}', 'bad', this)">&#x274C;</button>
       </div>
       <div class="comment-form">
         <input name="author" placeholder="Ismin" />
