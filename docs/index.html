@@ -309,6 +309,12 @@
       }
 
       const filtered = [...data].reverse().filter(o => getLastRating(o.keyword) !== 'bad');
+      // Yorumsuzlar önce, yorumlular sona
+      filtered.sort((a, b) => {
+        const aHas = (allComments[a.keyword] || []).length > 0 ? 1 : 0;
+        const bHas = (allComments[b.keyword] || []).length > 0 ? 1 : 0;
+        return aHas - bHas;
+      });
       document.getElementById('total').textContent = filtered.length;
 
       const rows = filtered.map(o => {
