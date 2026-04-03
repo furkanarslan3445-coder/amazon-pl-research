@@ -5,179 +5,506 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Amazon PL Niche Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #0a0e17; --bg2: #131921; --bg3: #232f3e;
+    --border: rgba(255,255,255,.06); --border2: rgba(255,255,255,.1);
+    --text: #f1f5f9; --text2: #a0aec0; --text3: #64748b;
+    --orange: #ff9900; --orange-dark: #e68a00; --orange-light: #ffad33;
+    --blue: #146eb4; --blue-light: #48a3c6;
+    --green: #067d62; --green-light: #00a67c;
+    --yellow: #f0c14b; --red: #cc0c39;
+    --purple: #8b5cf6;
+    --glass: rgba(255,255,255,.03);
+    --radius: 16px; --radius-sm: 10px;
+  }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0d1117; color: #e6edf3; font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  /* Animated bg gradient */
+  body::before {
+    content: ''; position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at 20% 50%, rgba(255,153,0,.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(20,110,180,.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(6,125,98,.03) 0%, transparent 50%);
+    z-index: -1; animation: bgMove 20s ease-in-out infinite alternate;
+  }
+  @keyframes bgMove { 0% { transform: translate(0,0); } 100% { transform: translate(-5%,-3%); } }
 
   header {
-    background: #161b22;
-    border-bottom: 1px solid #30363d;
-    padding: 16px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    background: rgba(17,24,39,.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100; gap: 10px;
   }
-  header h1 { font-size: 18px; font-weight: 600; color: #f0f6fc; }
-  .updated { font-size: 12px; color: #8b949e; }
+  header h1 {
+    font-size: 20px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #ff9900, #ffad33);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .header-clocks { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .clock-item {
+    display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text3);
+    background: var(--glass); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px;
+  }
+  .clock-item .clock-label { font-weight: 700; color: var(--text2); }
+  .clock-item .clock-time { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+  .akp-badge {
+    display: flex; align-items: center; gap: 5px; font-size: 11px;
+    background: rgba(255,120,0,.1); border: 1px solid rgba(255,120,0,.25); border-radius: 8px; padding: 4px 10px;
+    color: #ff8c00; font-weight: 700;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+    animation: pulse 2s infinite; box-shadow: 0 0 8px rgba(34,197,94,.5);
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
+  .updated { font-size: 12px; color: var(--text3); }
 
+  /* 5 stat cards */
   .stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-    padding: 24px 28px 0;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 28px 32px 0;
   }
   .card {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    padding: 20px;
+    background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; position: relative; overflow: hidden;
+    transition: transform .2s, border-color .2s;
   }
-  .card .label { font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
-  .card .value { font-size: 36px; font-weight: 700; color: #3fb950; }
+  .card:hover { transform: translateY(-2px); border-color: var(--border2); }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card.c-blue::before { background: linear-gradient(90deg, #ff9900, #ffad33); }
+  .card.c-green::before { background: linear-gradient(90deg, #067d62, #00a67c); }
+  .card.c-yellow::before { background: linear-gradient(90deg, #f0c14b, #f5d78e); }
+  .card.c-red::before { background: linear-gradient(90deg, #cc0c39, #e63e6d); }
+  .card.c-gray::before { background: linear-gradient(90deg, #232f3e, #37475a); }
+  .card .label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600; }
+  .card .value { font-size: 36px; font-weight: 800; }
+  .card.c-blue .value { color: var(--orange); }
+  .card.c-green .value { color: var(--green-light); }
+  .card.c-yellow .value { color: var(--yellow); }
+  .card.c-red .value { color: var(--red); }
+  .card.c-gray .value { color: #37475a; }
 
+  /* Toolbar */
+  .toolbar {
+    display: flex; gap: 10px; padding: 24px 32px 0; align-items: center; flex-wrap: wrap;
+  }
+  .search-box {
+    background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
+    padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; outline: none;
+    width: 280px; font-family: 'Inter', sans-serif; transition: border-color .2s, box-shadow .2s;
+  }
+  .search-box:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,153,0,.15); }
+  .search-box::placeholder { color: var(--text3); }
+  .filter-label { font-size: 12px; color: var(--text3); margin-left: 8px; font-weight: 500; }
+  .filter-btn {
+    padding: 7px 16px; border-radius: 24px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid var(--border2); background: var(--glass);
+    color: var(--text2); transition: all .25s; backdrop-filter: blur(8px);
+  }
+  .filter-btn:hover { border-color: var(--orange); color: var(--orange); background: rgba(255,153,0,.08); }
+  .filter-btn.active { background: var(--orange); color: #131921; border-color: var(--orange); box-shadow: 0 4px 12px rgba(255,153,0,.3); font-weight: 700; }
+  .filter-btn.active-green { background: rgba(6,125,98,.2); color: var(--green-light); border-color: var(--green-light); }
+  .filter-btn.active-yellow { background: rgba(240,193,75,.15); color: var(--yellow); border-color: var(--yellow); }
+  .filter-btn.active-red { background: rgba(204,12,57,.15); color: var(--red); border-color: var(--red); }
+  .filter-btn.active-purple { background: rgba(255,153,0,.12); color: var(--orange); border-color: var(--orange); }
+
+  /* Feedback panel */
+  .feedback-panel {
+    margin: 20px 32px 0;
+    background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  }
+  .feedback-list { max-height: 300px; overflow-y: auto; padding: 10px 0; }
+  .feedback-list::-webkit-scrollbar { width: 4px; }
+  .feedback-list::-webkit-scrollbar-track { background: transparent; }
+  .feedback-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  .feedback-item {
+    padding: 14px 22px; font-size: 13px; color: var(--text);
+    border-bottom: 1px solid var(--border); transition: background .15s;
+  }
+  .feedback-item:hover { background: rgba(255,255,255,.02); }
+  .fb-main { display: flex; align-items: center; gap: 10px; }
+  .feedback-item .fb-kw { color: var(--orange); font-weight: 600; min-width: 140px; }
+  .feedback-item .fb-author { color: var(--blue-light); font-weight: 600; }
+  .feedback-item .fb-text { flex: 1; color: var(--text2); }
+  .feedback-item .fb-time { color: var(--text3); font-size: 11px; white-space: nowrap; }
+  .fb-delete {
+    background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px;
+    padding: 2px 6px; border-radius: 6px; transition: background .15s;
+  }
+  .fb-delete:hover { background: rgba(239,68,68,.15); }
+  .fb-reply-btn {
+    background: none; border: none; color: var(--blue); cursor: pointer; font-size: 11px;
+    padding: 2px 8px; font-weight: 500;
+  }
+  .fb-reply-btn:hover { text-decoration: underline; }
+  .fb-replies { margin-left: 36px; margin-top: 6px; }
+  .fb-reply-item {
+    padding: 4px 0; font-size: 11px; color: var(--text3);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .fb-reply-item .reply-author { color: var(--blue-light); font-weight: 600; }
+  .fb-reply-item .reply-text { color: var(--text2); flex: 1; }
+  .fb-reply-item .reply-time { font-size: 10px; color: var(--text3); }
+  .fb-reply-form {
+    display: none; margin-left: 36px; margin-top: 6px; gap: 6px; align-items: center;
+  }
+  .fb-reply-form.open { display: flex; }
+  .fb-reply-form input {
+    background: var(--bg); border: 1px solid var(--border2); color: var(--text);
+    padding: 5px 10px; border-radius: 6px; font-size: 11px; outline: none; font-family: 'Inter', sans-serif;
+  }
+  .fb-reply-form input:focus { border-color: var(--blue); }
+  .fb-reply-form input[name="reply-author"] { width: 80px; }
+  .fb-reply-form input[name="reply-text"] { flex: 1; min-width: 120px; }
+  .fb-reply-form button {
+    background: var(--blue); border: none; color: #fff;
+    padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600;
+  }
+
+  /* Main panel */
   .panel {
-    margin: 16px 28px 28px;
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 10px;
-    overflow: hidden;
+    margin: 24px 32px 32px;
+    background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
   }
   .panel-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid #30363d;
-    font-size: 13px;
-    font-weight: 600;
-    color: #8b949e;
-    text-transform: uppercase;
-    letter-spacing: .5px;
+    padding: 18px 24px; border-bottom: 1px solid var(--border); font-size: 14px;
+    font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 1px;
   }
-
   table { width: 100%; border-collapse: collapse; }
   thead th {
-    padding: 10px 16px;
-    text-align: left;
-    font-size: 11px;
-    color: #8b949e;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    background: #161b22;
-    position: sticky;
-    top: 0;
-    border-bottom: 1px solid #30363d;
+    padding: 12px 18px; text-align: left; font-size: 11px; color: var(--text3);
+    text-transform: uppercase; letter-spacing: .8px; font-weight: 700;
+    background: rgba(17,24,39,.6); backdrop-filter: blur(8px);
+    position: sticky; top: 0; border-bottom: 1px solid var(--border); z-index: 2;
   }
-  tbody tr { border-bottom: 1px solid #21262d; }
-  tbody td { padding: 13px 16px; font-size: 13px; vertical-align: top; }
-  .kw { font-weight: 500; color: #e6edf3; }
-  .price { color: #3fb950; font-weight: 600; }
-  .ratio { color: #58a6ff; font-weight: 600; }
+  th.sortable { cursor: pointer; user-select: none; transition: color .15s; }
+  th.sortable:hover { color: var(--blue); }
+  th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: .5; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: all .15s; }
+  tbody tr:hover { background: rgba(255,153,0,.04); }
+  tbody td { padding: 16px 20px; font-size: 14px; vertical-align: top; }
+  .kw { font-weight: 500; color: var(--text); }
+  .price { color: var(--orange); font-weight: 700; }
+  .ratio { color: var(--blue-light); font-weight: 700; }
   .badge {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    background: #1a4a2e;
-    color: #3fb950;
-    border: 1px solid #2ea043;
+    display: inline-block; padding: 4px 12px; border-radius: 24px; font-size: 11px;
+    font-weight: 700; background: rgba(6,125,98,.15); color: var(--green-light);
+    border: 1px solid rgba(6,125,98,.3);
   }
-  .empty { padding: 60px; text-align: center; color: #8b949e; font-size: 14px; }
-  .loading { padding: 60px; text-align: center; color: #8b949e; font-size: 14px; }
+  .empty { padding: 60px; text-align: center; color: var(--text3); font-size: 14px; }
+  .loading { padding: 60px; text-align: center; color: var(--text3); font-size: 14px; }
 
   .kw-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .rating-dot { font-size: 16px; }
+  .amz-link {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 8px; font-size: 14px;
+    background: rgba(255,153,0,.08); color: #ff9900; text-decoration: none;
+    transition: all .2s; border: 1px solid rgba(255,153,0,.15); cursor: pointer;
+  }
+  .amz-link:hover { background: rgba(255,153,0,.25); transform: scale(1.15); box-shadow: 0 0 12px rgba(255,153,0,.2); }
 
   .comment-btn {
-    background: none;
-    border: 1px solid #30363d;
-    color: #8b949e;
-    padding: 5px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all .15s;
-    margin-top: 6px;
+    background: var(--glass); border: 1px solid var(--border2); color: var(--text2);
+    padding: 5px 12px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    transition: all .2s; margin-top: 8px; font-family: 'Inter', sans-serif; font-weight: 500;
   }
-  .comment-btn:hover { border-color: #58a6ff; color: #58a6ff; }
+  .comment-btn:hover { border-color: var(--orange); color: var(--orange); background: rgba(255,153,0,.08); }
 
   .comment-panel {
-    display: none;
-    margin-top: 10px;
-    background: #0d1117;
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    padding: 12px;
+    display: none; margin-top: 12px; background: var(--bg);
+    border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 14px;
   }
-  .comment-item {
-    padding: 8px 0;
-    border-bottom: 1px solid #21262d;
-    font-size: 12px;
-  }
+  .comment-item { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
   .comment-item:last-child { border-bottom: none; }
-  .comment-author { color: #58a6ff; font-weight: 600; margin-right: 6px; }
-  .comment-text { color: #e6edf3; }
-  .comment-date { color: #8b949e; font-size: 11px; margin-top: 2px; }
+  .comment-main { display: flex; align-items: flex-start; gap: 8px; }
+  .comment-author { color: var(--orange); font-weight: 600; }
+  .comment-text { color: var(--text2); flex: 1; }
+  .comment-date { color: var(--text3); font-size: 11px; margin-top: 3px; }
+  .comment-delete {
+    background: none; border: none; color: var(--red); cursor: pointer; font-size: 13px;
+    padding: 2px 5px; border-radius: 4px; flex-shrink: 0; transition: background .15s;
+  }
+  .comment-delete:hover { background: rgba(239,68,68,.15); }
+  .comment-reply-btn {
+    background: none; border: none; color: var(--blue); cursor: pointer; font-size: 11px;
+    padding: 2px 0; margin-top: 3px; font-weight: 500;
+  }
+  .comment-reply-btn:hover { text-decoration: underline; }
+  .comment-replies { margin-left: 28px; margin-top: 6px; }
+  .comment-reply-item {
+    padding: 5px 0; font-size: 11px; display: flex; align-items: center; gap: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .comment-reply-item .reply-author { color: var(--blue-light); font-weight: 600; }
+  .comment-reply-item .reply-text { color: var(--text2); flex: 1; }
+  .comment-reply-item .reply-time { font-size: 10px; color: var(--text3); }
+  .comment-reply-item .reply-delete {
+    background: none; border: none; color: var(--red); cursor: pointer; font-size: 11px;
+    padding: 1px 4px; border-radius: 3px;
+  }
+  .comment-reply-item .reply-delete:hover { background: rgba(239,68,68,.12); }
+  .comment-reply-form {
+    display: none; margin-left: 28px; margin-top: 8px; gap: 6px; align-items: center;
+  }
+  .comment-reply-form.open { display: flex; }
+  .comment-reply-form input {
+    background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
+    padding: 5px 10px; border-radius: 6px; font-size: 11px; outline: none; font-family: 'Inter', sans-serif;
+  }
+  .comment-reply-form input:focus { border-color: var(--blue); }
+  .comment-reply-form input[name="r-author"] { width: 80px; }
+  .comment-reply-form input[name="r-text"] { flex: 1; min-width: 120px; }
+  .comment-reply-form button {
+    background: var(--blue); border: none; color: #fff;
+    padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600;
+  }
 
-  .rating-btns { display: flex; gap: 6px; margin-bottom: 8px; }
+  .rating-btns { display: flex; gap: 8px; margin-bottom: 10px; }
   .rating-btn {
-    background: #161b22;
-    border: 1px solid #30363d;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all .15s;
+    background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px;
+    padding: 6px 14px; font-size: 16px; cursor: pointer; transition: all .2s;
   }
-  .rating-btn:hover { border-color: #8b949e; }
-  .rating-btn.selected-good { border-color: #3fb950; background: #1a4a2e; }
-  .rating-btn.selected-mid  { border-color: #d29922; background: #2d2209; }
-  .rating-btn.selected-bad  { border-color: #f85149; background: #3d1212; }
+  .rating-btn:hover { border-color: var(--text3); transform: scale(1.05); }
+  .rating-btn.selected-good { border-color: var(--green); background: rgba(34,197,94,.15); box-shadow: 0 0 12px rgba(34,197,94,.2); }
+  .rating-btn.selected-mid { border-color: var(--yellow); background: rgba(234,179,8,.12); box-shadow: 0 0 12px rgba(234,179,8,.2); }
+  .rating-btn.selected-bad { border-color: var(--red); background: rgba(239,68,68,.12); box-shadow: 0 0 12px rgba(239,68,68,.2); }
 
-  .comment-form { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .comment-form { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
   .comment-form input {
-    background: #161b22;
-    border: 1px solid #30363d;
-    color: #e6edf3;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    outline: none;
+    background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
+    padding: 8px 12px; border-radius: 8px; font-size: 12px; outline: none; font-family: 'Inter', sans-serif;
   }
-  .comment-form input:focus { border-color: #58a6ff; }
-  .comment-form input[name="author"] { width: 100px; }
-  .comment-form input[name="text"] { flex: 1; min-width: 150px; }
+  .comment-form input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+  .comment-form input[name="author"] { width: 110px; }
+  .comment-form input[name="text"] { flex: 1; min-width: 160px; }
   .comment-form button {
-    background: #238636;
-    border: none;
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
+    background: linear-gradient(135deg, #f0c14b, #e68a00); border: none; color: #131921;
+    padding: 8px 18px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    font-weight: 700; font-family: 'Inter', sans-serif; transition: transform .15s, box-shadow .15s;
   }
-  .comment-form button:hover { background: #2ea043; }
+  .comment-form button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,153,0,.3); }
+
+  /* Todo list */
+  .todo-panel {
+    margin: 24px 32px 0;
+    background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  }
+  .todo-list { padding: 8px 0; max-height: 300px; overflow-y: auto; }
+  .todo-list::-webkit-scrollbar { width: 4px; }
+  .todo-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  .todo-item {
+    padding: 12px 22px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border); transition: background .15s; font-size: 13px;
+  }
+  .todo-item:hover { background: rgba(255,153,0,.03); }
+  .todo-item.done { opacity: .5; }
+  .todo-item.done .todo-text { text-decoration: line-through; }
+  .todo-check {
+    width: 18px; height: 18px; border-radius: 6px; cursor: pointer;
+    accent-color: var(--orange); flex-shrink: 0;
+  }
+  .todo-text { flex: 1; color: var(--text); }
+  .todo-author { color: var(--blue-light); font-size: 11px; font-weight: 600; }
+  .todo-time { color: var(--text3); font-size: 11px; }
+  .todo-delete {
+    background: none; border: none; color: var(--red); cursor: pointer; font-size: 14px;
+    padding: 2px 6px; border-radius: 6px; transition: background .15s;
+  }
+  .todo-delete:hover { background: rgba(204,12,57,.15); }
+  .todo-form {
+    display: flex; gap: 8px; padding: 12px 22px; border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .todo-form input {
+    background: var(--bg2); border: 1px solid var(--border2); color: var(--text);
+    padding: 8px 12px; border-radius: 8px; font-size: 12px; outline: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .todo-form input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,153,0,.1); }
+  .todo-form input[name="todo-author"] { width: 100px; }
+  .todo-form input[name="todo-text"] { flex: 1; min-width: 200px; }
+  .todo-form button {
+    background: linear-gradient(135deg, #f0c14b, #e68a00); border: none; color: #131921;
+    padding: 8px 18px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    font-weight: 700; font-family: 'Inter', sans-serif; transition: transform .15s, box-shadow .15s;
+  }
+  .todo-form button:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,153,0,.3); }
+
+  /* Olasi Urunler & Feedback panelleri bosluk */
+  .feedback-panel, #approved-panel { margin-top: 24px; }
+
+  .approved-item {
+    padding: 14px 22px; font-size: 13px; color: var(--text);
+    border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px;
+    cursor: pointer; transition: background .15s;
+  }
+  .approved-item:hover { background: rgba(34,197,94,.06); }
+  .approved-item .ap-kw { color: var(--green-light); font-weight: 700; flex: 1; }
+  .approved-item .ap-price { color: var(--orange); font-weight: 700; min-width: 60px; }
+  .approved-item .ap-ratio { color: var(--blue-light); font-weight: 600; min-width: 50px; }
+  .approved-item .ap-count { color: var(--text3); font-size: 12px; min-width: 70px; }
+  .approved-item .ap-comment { color: var(--text2); font-size: 12px; flex: 2; }
+
+  /* YENI badge */
+  .new-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 10px;
+    font-weight: 700; background: linear-gradient(135deg, var(--orange), var(--orange-dark));
+    color: #fff; letter-spacing: .5px; animation: newPulse 2s infinite;
+  }
+  @keyframes newPulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+  /* Not defteri */
+  .notes-btn {
+    background: var(--glass); border: 1px solid var(--border2); color: var(--blue-light);
+    padding: 4px 10px; border-radius: 8px; font-size: 11px; cursor: pointer;
+    transition: all .2s; margin-top: 4px; font-family: 'Inter', sans-serif; font-weight: 600;
+    margin-left: 6px;
+  }
+  .notes-btn:hover { border-color: var(--blue-light); background: rgba(20,110,180,.1); }
+  .notes-panel {
+    display: none; margin-top: 10px; background: var(--bg);
+    border: 1px solid rgba(255,153,0,.2); border-radius: var(--radius-sm); padding: 14px;
+  }
+  .notes-panel.open { display: block; }
+  .notes-textarea {
+    width: 100%; min-height: 80px; background: var(--bg2); border: 1px solid var(--border2);
+    color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 12px;
+    font-family: 'Inter', sans-serif; outline: none; resize: vertical;
+    line-height: 1.5;
+  }
+  .notes-textarea:focus { border-color: var(--orange); box-shadow: 0 0 0 3px rgba(255,153,0,.1); }
+  .notes-textarea::placeholder { color: var(--text3); }
+  .notes-save {
+    background: linear-gradient(135deg, #f0c14b, #e68a00); border: none; color: #131921;
+    padding: 6px 16px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    font-weight: 700; font-family: 'Inter', sans-serif; margin-top: 8px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .notes-save:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,153,0,.3); }
+  .notes-saved { color: var(--green); font-size: 11px; margin-left: 8px; font-weight: 600; opacity: 0; transition: opacity .3s; }
+  .notes-saved.show { opacity: 1; }
+
+  /* Gruplama */
+  .group-toggle {
+    padding: 7px 16px; border-radius: 24px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1px solid rgba(255,153,0,.3); background: rgba(255,153,0,.08);
+    color: var(--orange); transition: all .25s; margin-left: auto;
+  }
+  .group-toggle:hover { background: rgba(255,153,0,.15); }
+  .group-toggle.active { background: var(--orange); color: #131921; border-color: var(--orange); }
+  .group-header {
+    padding: 10px 18px; background: rgba(255,153,0,.04); border-bottom: 1px solid var(--border);
+    cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background .15s;
+  }
+  .group-header:hover { background: rgba(255,153,0,.08); }
+  .group-name { font-weight: 700; color: var(--orange); font-size: 13px; }
+  .group-count {
+    font-size: 11px; color: var(--text3); background: var(--bg2);
+    padding: 2px 8px; border-radius: 10px;
+  }
+  .group-arrow { color: var(--text3); font-size: 12px; margin-left: auto; transition: transform .2s; }
+  .group-arrow.open { transform: rotate(90deg); }
+
+  @media (max-width: 900px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .search-box { width: 100%; }
+    .toolbar { padding: 16px 16px 0; }
+    .stats, .feedback-panel, .panel { margin-left: 16px; margin-right: 16px; }
+    header { padding: 14px 16px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Amazon PL Niche Araştırma</h1>
-  <span class="updated" id="updated"></span>
+  <h1>Amazon PL Niche Arastirma</h1>
+  <div class="header-right">
+    <div class="header-clocks">
+      <div class="clock-item" title="Ispanya/Madrid canli saat">
+        <span class="clock-label">Madrid</span>
+        <span class="clock-time" id="clock-madrid">--:--</span>
+      </div>
+      <div class="clock-item" title="Turkiye/Istanbul canli saat">
+        <span class="clock-label">Istanbul</span>
+        <span class="clock-time" id="clock-istanbul">--:--</span>
+      </div>
+      <div class="akp-badge" title="Reisimizin guncel anket oy orani (ortalama)">
+        AKP %31.5
+      </div>
+    </div>
+    <div class="live-dot" title="Bot aktif calisiyor"></div>
+    <span class="updated" id="updated"></span>
+  </div>
 </header>
 
 <div class="stats">
-  <div class="card">
-    <div class="label">Toplam Fırsat</div>
-    <div class="value" id="total">—</div>
+  <div class="card c-blue" title="Cop veriler ve reddedilenler haric toplam firsat sayisi">
+    <div class="label">Toplam Firsat</div>
+    <div class="value" id="stat-total">-</div>
   </div>
-  <div class="card">
-    <div class="label">En Son Bulunan</div>
-    <div class="value" style="font-size:16px; padding-top:8px;" id="last-kw">—</div>
+  <div class="card c-green" title="Girilmeye deger bulunan firsatlar">
+    <div class="label">Onaylanan</div>
+    <div class="value" id="stat-good">-</div>
+  </div>
+  <div class="card c-yellow" title="Arastirma asamasinda olan firsatlar">
+    <div class="label">Dusunuluyor</div>
+    <div class="value" id="stat-mid">-</div>
+  </div>
+  <div class="card c-gray" title="Henuz kimse degerlendirmemis firsatlar">
+    <div class="label">Degerlenmemis</div>
+    <div class="value" id="stat-none">-</div>
   </div>
 </div>
 
+<!-- Todo List -->
+<div class="todo-panel">
+  <div class="panel-header" style="color:var(--orange);" title="Yapilacaklar listesi - ekip icin gorev takibi">Yapilacaklar</div>
+  <div class="todo-list" id="todo-list"></div>
+  <div class="todo-form">
+    <input name="todo-author" placeholder="Ismin" />
+    <input name="todo-text" placeholder="Yapilacak gorev ekle..." onkeydown="if(event.key==='Enter') addTodo(this)" />
+    <button onclick="addTodo(this)">Ekle</button>
+  </div>
+</div>
+
+<!-- Olasi Urunler -->
+<div class="feedback-panel" id="approved-panel" style="display:none;">
+  <div class="panel-header" style="color:var(--green);">Olasi Urunler</div>
+  <div class="feedback-list" id="approved-list"></div>
+</div>
+
+<!-- Son Feedbackler -->
+<div class="feedback-panel" id="feedback-panel" style="display:none;">
+  <div class="panel-header" title="Son yapilan yorum ve degerlendirmeler (yeniden eskiye)">Son Feedbackler</div>
+  <div class="feedback-list" id="feedback-list"></div>
+</div>
+
+<div class="toolbar">
+  <input class="search-box" id="search" type="text" placeholder="Keyword ara..." oninput="renderTable()">
+  <span class="filter-label">Filtre:</span>
+  <div class="filter-btn active" data-filter="all" onclick="setFilter('all')" title="Reddedilenler haric tum firsatlari goster">Hepsi</div>
+  <div class="filter-btn" data-filter="good" onclick="setFilter('good')" title="Onaylanan firsatlari goster">Onaylananlar</div>
+  <div class="filter-btn" data-filter="mid" onclick="setFilter('mid')" title="Henuz karar verilmemis, dusunulen firsatlar">Dusunuluyor</div>
+  <div class="filter-btn" data-filter="none" onclick="setFilter('none')" title="Hic feedback almamis firsatlar">Degerlenmemis</div>
+  <div class="filter-btn" data-filter="new" onclick="setFilter('new')" title="Son eklenen firsatlar">Yeni Urunler</div>
+  <div class="filter-btn" data-filter="has-feedback" onclick="setFilter('has-feedback')" title="En az bir yorum veya rating alan firsatlar">Feedbacki Olanlar</div>
+  <div class="group-toggle" id="group-toggle" onclick="toggleGroupMode()" title="Benzer keyword'leri otomatik gruplar (ornek: tum 'cat bed' cesitleri tek baslik altinda)">Grupla</div>
+</div>
+
 <div class="panel">
-  <div class="panel-header">Fırsatlar</div>
-  <div id="content" class="loading">Yükleniyor...</div>
+  <div class="panel-header" title="Botun buldugu tum firsat keyword'leri">Firsatlar</div>
+  <div id="content" class="loading">Yukleniyor...</div>
 </div>
 
 <script>
@@ -186,181 +513,705 @@
   const JSON_URL = "https://raw.githubusercontent.com/furkanarslan3445-coder/amazon-pl-research/main/output/opportunities.json";
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
   let allComments = {};
+  let allReplies = {};  // commentId -> [replies]
   let selectedRatings = {};
+  let oppData = [];
+  let currentFilter = 'all';
+  let sortCol = null;
+  let sortDir = 'asc';
+  let allNotes = {};
+  let groupMode = false;
+  let openGroups = new Set();
 
+  // --- Todo List ---
+  let allTodos = [];
+
+  async function loadTodos() {
+    const { data } = await sb.from("todos").select("*").order("created_at", { ascending: false });
+    allTodos = data || [];
+  }
+
+  function renderTodos() {
+    const list = document.getElementById('todo-list');
+    if (allTodos.length === 0) {
+      list.innerHTML = '<div style="padding:20px 22px;color:var(--text3);font-size:13px;">Henuz gorev yok. Asagidan ekle.</div>';
+      return;
+    }
+    list.innerHTML = allTodos.map(t => {
+      const done = t.done ? 'done' : '';
+      return `
+        <div class="todo-item ${done}">
+          <input type="checkbox" class="todo-check" ${t.done ? 'checked' : ''} onchange="toggleTodo('${t.id}', this.checked)">
+          <span class="todo-text">${t.text}</span>
+          <span class="todo-author">${t.author}</span>
+          <span class="todo-time">${timeAgo(t.created_at)}</span>
+          <button class="todo-delete" onclick="deleteTodo('${t.id}')" title="Gorevi sil">&times;</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  async function addTodo(el) {
+    const form = el.closest('.todo-form');
+    const authorInput = form.querySelector('[name="todo-author"]');
+    const textInput = form.querySelector('[name="todo-text"]');
+    const author = authorInput.value.trim();
+    const text = textInput.value.trim();
+    if (!author) { alert('Ismini yaz!'); return; }
+    if (!text) { alert('Gorev yaz!'); return; }
+    await sb.from("todos").insert({ author, text, done: false });
+    textInput.value = '';
+    await loadTodos();
+    renderTodos();
+  }
+
+  async function toggleTodo(id, done) {
+    await sb.from("todos").update({ done }).eq("id", id);
+    await loadTodos();
+    renderTodos();
+  }
+
+  async function deleteTodo(id) {
+    if (!confirm('Bu gorevi silmek istediginize emin misiniz?')) return;
+    await sb.from("todos").delete().eq("id", id);
+    await loadTodos();
+    renderTodos();
+  }
+
+  // Zaman formatlama
+  function timeAgo(dateStr) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diff = Math.floor((now - date) / 1000);
+    if (diff < 60) return 'az once';
+    if (diff < 3600) return Math.floor(diff / 60) + ' dk once';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' saat once';
+    const days = Math.floor(diff / 86400);
+    if (days === 1) return 'dun';
+    if (days < 7) return days + ' gun once';
+    return date.toLocaleDateString('tr-TR');
+  }
+
+  // Cop veri filtresi
+  const JUNK_PATTERNS = [/^\$?\d+\.\d+/, /stars?\(/, /bought in past/, /out of 5/, /100 sheets/, /oeko-tex/i];
+  function isJunk(kw) { return JUNK_PATTERNS.some(p => p.test(kw)); }
+
+  // --- Supabase: yorumlari + yanitlari yukle ---
   async function loadComments() {
     const { data } = await sb.from("comments").select("*").order("created_at", { ascending: true });
     allComments = {};
+    allReplies = {};
     if (data) {
       data.forEach(c => {
-        if (!allComments[c.keyword]) allComments[c.keyword] = [];
-        allComments[c.keyword].push(c);
+        if (c.parent_id) {
+          // Bu bir yanit
+          if (!allReplies[c.parent_id]) allReplies[c.parent_id] = [];
+          allReplies[c.parent_id].push(c);
+        } else {
+          // Ana yorum
+          if (!allComments[c.keyword]) allComments[c.keyword] = [];
+          allComments[c.keyword].push(c);
+        }
       });
     }
+  }
+
+  // --- Notlari yukle ---
+  async function loadNotes() {
+    const { data } = await sb.from("notes").select("*");
+    allNotes = {};
+    if (data) data.forEach(n => { allNotes[n.keyword] = n; });
+  }
+
+  async function saveNote(kw, btn) {
+    const panel = btn.closest('.notes-panel');
+    const textarea = panel.querySelector('.notes-textarea');
+    const savedEl = panel.querySelector('.notes-saved');
+    const text = textarea.value.trim();
+    btn.disabled = true; btn.textContent = '...';
+    if (allNotes[kw]) {
+      await sb.from("notes").update({ content: text, updated_at: new Date().toISOString() }).eq("keyword", kw);
+    } else {
+      await sb.from("notes").insert({ keyword: kw, content: text });
+    }
+    await loadNotes();
+    btn.disabled = false; btn.textContent = 'Kaydet';
+    savedEl.classList.add('show');
+    setTimeout(() => savedEl.classList.remove('show'), 2000);
+  }
+
+  function toggleNotes(kw) {
+    const id = "np_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
+    const panel = document.getElementById(id);
+    if (panel) panel.classList.toggle('open');
+  }
+
+  // --- YENi badge: son 2 gun icerisinde eklenen ---
+  function isNewKeyword(kw) {
+    const idx = oppData.findIndex(o => o.keyword === kw);
+    if (idx === -1) return false;
+    const totalLen = oppData.length;
+    // Son %15'e giriyorsa "yeni" say (JSON'a tarih bilgisi yoksa siralamadan cikarilir)
+    return idx >= totalLen * 0.85;
+  }
+
+  // --- Gruplama ---
+  function toggleGroupMode() {
+    groupMode = !groupMode;
+    document.getElementById('group-toggle').classList.toggle('active', groupMode);
+    renderTable();
+  }
+
+  function toggleGroup(groupName) {
+    if (openGroups.has(groupName)) openGroups.delete(groupName);
+    else openGroups.add(groupName);
+    renderTable();
+  }
+
+  function getKeywordBase(kw) {
+    // En az 2 kelimelik ortak on ek bul
+    const words = kw.toLowerCase().split(/\s+/);
+    if (words.length <= 2) return kw.toLowerCase();
+    return words.slice(0, 3).join(' ');
+  }
+
+  function groupKeywords(items) {
+    const groups = {};
+    items.forEach(o => {
+      const base = getKeywordBase(o.keyword);
+      if (!groups[base]) groups[base] = [];
+      groups[base].push(o);
+    });
+    // Tek itemlik gruplari "Diger" altina topla
+    const result = {};
+    const singles = [];
+    Object.keys(groups).forEach(key => {
+      if (groups[key].length >= 2) result[key] = groups[key];
+      else singles.push(...groups[key]);
+    });
+    if (singles.length > 0) result['diger'] = singles;
+    return result;
   }
 
   function getLastRating(kw) {
     const comments = allComments[kw] || [];
     const withRating = comments.filter(c => c.rating);
     if (withRating.length === 0) return null;
-    return withRating[withRating.length - 1].rating;
+    const last = withRating[withRating.length - 1].rating;
+    if (last === 'clear') return null; // rating kaldirildi
+    return last;
   }
 
   function ratingDot(rating) {
-    if (rating === 'good') return '<span class="rating-dot" title="Olumlu">🟢</span>';
-    if (rating === 'mid')  return '<span class="rating-dot" title="Kararsız">🟡</span>';
-    if (rating === 'bad')  return '<span class="rating-dot" title="Olumsuz">🔴</span>';
+    if (rating === 'good') return '<span class="rating-dot" title="Onaylandi">&#x1F7E2;</span>';
+    if (rating === 'mid') return '<span class="rating-dot" title="Dusunuluyor">&#x1F7E1;</span>';
+    if (rating === 'bad') return '<span class="rating-dot" title="Olumsuz">&#x1F534;</span>';
     return '';
   }
 
+  // --- Yorum silme ---
+  async function deleteComment(commentId, kw) {
+    if (!confirm('Bu yorumu silmek istediginize emin misiniz?')) return;
+    // Yanitlari da sil
+    const replies = allReplies[commentId] || [];
+    for (const r of replies) {
+      const { error: re } = await sb.from("comments").delete().eq("id", r.id);
+      if (re) console.error('Yanit silme hatasi:', re);
+    }
+    const { error } = await sb.from("comments").delete().eq("id", commentId);
+    if (error) { alert('Silme hatasi: ' + error.message); console.error('Silme hatasi:', error); return; }
+    await loadComments();
+    renderCommentPanel(kw);
+    renderFeedbackPanel();
+    updateStatCards();
+    renderTable();
+  }
+
+  // --- Yanit silme ---
+  async function deleteReply(replyId, kw) {
+    if (!confirm('Bu yaniti silmek istediginize emin misiniz?')) return;
+    await sb.from("comments").delete().eq("id", replyId);
+    await loadComments();
+    renderCommentPanel(kw);
+    renderFeedbackPanel();
+  }
+
+  // --- Yanit ekleme ---
+  async function addReply(parentId, kw, author, text) {
+    if (!author.trim() || !text.trim()) { alert('Isim ve yanit yazin!'); return; }
+    await sb.from("comments").insert({
+      keyword: kw,
+      author: author.trim(),
+      comment: text.trim(),
+      rating: null,
+      parent_id: parentId
+    });
+    await loadComments();
+    renderCommentPanel(kw);
+    renderFeedbackPanel();
+  }
+
+  // Keyword'e scroll et ve feedback panelini ac
+  function scrollToKeyword(kw) {
+    const id = "cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
+    const panel = document.getElementById(id);
+    if (panel) {
+      const row = panel.closest('tr');
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.style.background = 'rgba(59,130,246,.12)';
+        setTimeout(() => { row.style.background = ''; }, 2000);
+        // Feedback panelini ac
+        if (panel.style.display !== 'block') {
+          panel.style.display = 'block';
+          renderCommentPanel(kw);
+        }
+      }
+    }
+  }
+
+  function toggleReplyForm(formId) {
+    const form = document.getElementById(formId);
+    if (form) form.classList.toggle('open');
+  }
+
+  async function submitReply(parentId, kw, btn) {
+    const form = btn.closest('.comment-reply-form') || btn.closest('.fb-reply-form');
+    const author = form.querySelector('[name="r-author"], [name="reply-author"]').value;
+    const text = form.querySelector('[name="r-text"], [name="reply-text"]').value;
+    if (!author.trim() || !text.trim()) { alert('Isim ve yanit yazin!'); return; }
+    btn.disabled = true; btn.textContent = '...';
+    await addReply(parentId, kw, author, text);
+    btn.disabled = false; btn.textContent = 'Yanitle';
+  }
+
+  // --- Filtre ---
+  function setFilter(f) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.remove('active', 'active-green', 'active-yellow', 'active-red');
+      if (btn.dataset.filter === f) {
+        if (f === 'good') btn.classList.add('active-green');
+        else if (f === 'mid') btn.classList.add('active-yellow');
+        else if (f === 'new' || f === 'has-feedback') btn.classList.add('active-purple');
+        else btn.classList.add('active');
+      }
+    });
+    renderTable();
+  }
+
+  // --- Siralama ---
+  function setSort(col) {
+    if (col === 'newest') {
+      sortCol = 'newest'; sortDir = 'desc';
+    } else if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col; sortDir = 'desc';
+    }
+    renderTable();
+  }
+  function sortArrow(col) {
+    if (sortCol !== col) return '<span class="sort-arrow">&#x25B4;&#x25BE;</span>';
+    return sortDir === 'asc' ? '<span class="sort-arrow">&#x25B4;</span>' : '<span class="sort-arrow">&#x25BE;</span>';
+  }
+
+  // --- Istatistik kartlari ---
+  function updateStatCards() {
+    const clean = oppData.filter(o => !isJunk(o.keyword));
+    let good = 0, mid = 0, bad = 0, none = 0;
+    clean.forEach(o => {
+      const r = getLastRating(o.keyword);
+      if (r === 'good') good++;
+      else if (r === 'mid') mid++;
+      else if (r === 'bad') bad++;
+      else none++;
+    });
+    const visible = clean.length - bad;
+    document.getElementById('stat-total').textContent = visible;
+    document.getElementById('stat-good').textContent = good;
+    document.getElementById('stat-mid').textContent = mid;
+    document.getElementById('stat-none').textContent = none;
+  }
+
+  // --- Yanitlari renderla ---
+  function renderRepliesHTML(parentId, kw) {
+    const replies = allReplies[parentId] || [];
+    if (replies.length === 0) return '';
+    const kwEsc = kw.replace(/'/g,"\\'");
+    return '<div class="comment-replies">' + replies.map(r => `
+      <div class="comment-reply-item">
+        <span class="reply-author">${r.author}</span>
+        <span class="reply-text">${r.comment}</span>
+        <span class="reply-time">${new Date(r.created_at).toLocaleString('tr-TR')}</span>
+        <button class="reply-delete" onclick="deleteReply('${r.id}', '${kwEsc}')" title="Sil">&times;</button>
+      </div>
+    `).join('') + '</div>';
+  }
+
+  // --- Olasi Urunler paneli (furkan'in onayladiklari) ---
+  function renderApprovedPanel() {
+    const panel = document.getElementById('approved-panel');
+    const list = document.getElementById('approved-list');
+
+    // SADECE furkan'in good rating verdigi keyword'leri bul
+    const approvedKws = [];
+    const clean = oppData.filter(o => !isJunk(o.keyword));
+    clean.forEach(o => {
+      const comments = allComments[o.keyword] || [];
+      // Sadece furkan kullanicisinin good ratinglerini al
+      const furkanGood = comments.filter(c => c.author && c.author.toLowerCase() === 'furkan' && c.rating === 'good');
+      if (furkanGood.length > 0) {
+        const lastComment = furkanGood[furkanGood.length - 1];
+        approvedKws.push({ ...o, comment: lastComment.comment || '', time: lastComment.created_at });
+      }
+    });
+
+    if (approvedKws.length === 0) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+
+    // Yeniden eskiye sirala
+    approvedKws.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+    list.innerHTML = approvedKws.map(o => {
+      const kwEsc = o.keyword.replace(/'/g,"\\'");
+      return `
+        <div class="approved-item" onclick="scrollToKeyword('${kwEsc}')">
+          <span class="ap-kw">${o.keyword}</span>
+          <span class="ap-count">${o.product_count} urun</span>
+          <span class="ap-price">${o.avg_price}</span>
+          <span class="ap-ratio">${o.ratio}</span>
+          <span class="ap-comment">${o.comment}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // --- Son feedbackler paneli ---
+  function renderFeedbackPanel() {
+    const panel = document.getElementById('feedback-panel');
+    const list = document.getElementById('feedback-list');
+    let allFlat = [];
+    Object.keys(allComments).forEach(kw => {
+      allComments[kw].forEach(c => { allFlat.push({ ...c, keyword: kw }); });
+    });
+    allFlat = allFlat.filter(c => c.rating !== 'bad');
+    allFlat.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    allFlat = allFlat.slice(0, 30);
+    if (allFlat.length === 0) { panel.style.display = 'none'; return; }
+    panel.style.display = 'block';
+    list.innerHTML = allFlat.map(c => {
+      const kwEsc = c.keyword.replace(/'/g,"\\'");
+      const replies = allReplies[c.id] || [];
+      const replyFormId = 'fbrf_' + c.id;
+      const repliesHTML = replies.length > 0 ? '<div class="fb-replies">' + replies.map(r => `
+        <div class="fb-reply-item">
+          <span class="reply-author">${r.author}</span>
+          <span class="reply-text">${r.comment}</span>
+          <span class="reply-time">${new Date(r.created_at).toLocaleString('tr-TR')}</span>
+          <button class="reply-delete" onclick="deleteReply('${r.id}', '${kwEsc}')" title="Sil" style="background:none;border:none;color:#f85149;cursor:pointer;font-size:11px;">&times;</button>
+        </div>
+      `).join('') + '</div>' : '';
+      return `
+        <div class="feedback-item" style="cursor:pointer" onclick="scrollToKeyword('${kwEsc}')">
+          <div class="fb-main">
+            <span class="fb-kw">${c.keyword}</span>
+            <span class="fb-author">${c.author}</span>
+            ${c.rating ? ratingDot(c.rating) : ''}
+            <span class="fb-text">${c.comment || ''}</span>
+            <span class="fb-time">${timeAgo(c.created_at)}</span>
+            <button class="fb-reply-btn" onclick="event.stopPropagation();toggleReplyForm('${replyFormId}')">Yanitle</button>
+            <button class="fb-delete" onclick="event.stopPropagation();deleteComment('${c.id}', '${kwEsc}')" title="Yorumu sil">&times;</button>
+          </div>
+          ${repliesHTML}
+          <div class="fb-reply-form" id="${replyFormId}">
+            <input name="reply-author" placeholder="Ismin" />
+            <input name="reply-text" placeholder="Yanit yaz..." />
+            <button onclick="submitReply('${c.id}', '${kwEsc}', this)">Yanitle</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // --- Yorum paneli (keyword ici) ---
   function toggleComments(kw) {
     const panel = document.getElementById("cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,""));
     if (!panel) return;
     panel.style.display = panel.style.display === "block" ? "none" : "block";
   }
+  // Hizli rating toggle - ayni rating'e basinca kaldir
+  async function quickToggleRating(kw, rating, btn) {
+    const current = getLastRating(kw);
+    const author = prompt('Ismin:');
+    if (!author || !author.trim()) return;
+    if (current === rating) {
+      // Ayni rating = iptal et, "clear" rating ekle
+      await sb.from("comments").insert({
+        keyword: kw, author: author.trim(), comment: 'Rating kaldirildi', rating: 'clear'
+      });
+    } else {
+      await sb.from("comments").insert({
+        keyword: kw, author: author.trim(), comment: '', rating: rating
+      });
+    }
+    await loadComments();
+    renderCommentPanel(kw);
+    renderFeedbackPanel();
+    updateStatCards();
+    renderTable();
+  }
 
   function selectRating(kw, rating, btn) {
+    // Ayni rating'e tekrar basinca iptal et
+    if (selectedRatings[kw] === rating) {
+      selectedRatings[kw] = null;
+      btn.classList.remove('selected-good', 'selected-mid', 'selected-bad');
+      return;
+    }
     selectedRatings[kw] = rating;
     const btns = btn.closest('.rating-btns').querySelectorAll('.rating-btn');
     btns.forEach(b => b.className = 'rating-btn');
     if (rating === 'good') btn.classList.add('selected-good');
-    if (rating === 'mid')  btn.classList.add('selected-mid');
-    if (rating === 'bad')  btn.classList.add('selected-bad');
+    if (rating === 'mid') btn.classList.add('selected-mid');
+    if (rating === 'bad') btn.classList.add('selected-bad');
   }
-
   async function addComment(kw, author, text, rating) {
     if (!author.trim()) return;
     await sb.from("comments").insert({
-      keyword: kw,
-      author: author.trim(),
-      comment: text.trim(),
-      rating: rating || null
+      keyword: kw, author: author.trim(), comment: text.trim(), rating: rating || null
     });
     await loadComments();
     renderCommentPanel(kw);
-    // Rating dot güncelle
+    renderFeedbackPanel();
+    updateStatCards();
     const id = "dot_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
     const dotEl = document.getElementById(id);
     if (dotEl) dotEl.innerHTML = ratingDot(getLastRating(kw));
   }
-
   function renderCommentPanel(kw) {
     const id = "cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
     const panel = document.getElementById(id);
     if (!panel) return;
-    const comments = allComments[kw] || [];
-    const list = comments.map(c => `
-      <div class="comment-item">
-        <span class="comment-author">${c.author}</span>
-        ${c.rating ? ratingDot(c.rating) : ''}
-        <span class="comment-text">${c.comment}</span>
-        <div class="comment-date">${new Date(c.created_at).toLocaleString('tr-TR')}</div>
-      </div>
-    `).join('') || '<div style="color:#8b949e;font-size:12px;padding:4px 0">Henüz yorum yok.</div>';
-
+    const comments = [...(allComments[kw] || [])].reverse();
     const kwEsc = kw.replace(/'/g,"\\'");
+    const list = comments.map(c => {
+      const replyFormId = 'crf_' + c.id;
+      return `
+        <div class="comment-item">
+          <div class="comment-main">
+            <span class="comment-author">${c.author}</span>
+            ${c.rating ? ratingDot(c.rating) : ''}
+            <span class="comment-text">${c.comment || ''}</span>
+            <button class="comment-delete" onclick="deleteComment('${c.id}', '${kwEsc}')" title="Sil">&times;</button>
+          </div>
+          <div class="comment-date">${new Date(c.created_at).toLocaleString('tr-TR')}</div>
+          <button class="comment-reply-btn" onclick="toggleReplyForm('${replyFormId}')">Yanitle</button>
+          ${renderRepliesHTML(c.id, kw)}
+          <div class="comment-reply-form" id="${replyFormId}">
+            <input name="r-author" placeholder="Ismin" />
+            <input name="r-text" placeholder="Yanit yaz..." />
+            <button onclick="submitReply('${c.id}', '${kwEsc}', this)">Yanitle</button>
+          </div>
+        </div>
+      `;
+    }).join('') || '<div style="color:#8b949e;font-size:12px;padding:4px 0">Henuz yorum yok.</div>';
     panel.innerHTML = `
       <div>${list}</div>
       <div class="rating-btns">
-        <button class="rating-btn" onclick="selectRating('${kwEsc}', 'good', this)">✅</button>
-        <button class="rating-btn" onclick="selectRating('${kwEsc}', 'mid', this)">➖</button>
-        <button class="rating-btn" onclick="selectRating('${kwEsc}', 'bad', this)">❌</button>
+        <button class="rating-btn ${getLastRating(kw)==='good'?'selected-good':''}" onclick="quickToggleRating('${kwEsc}', 'good', this)">&#x2705;</button>
+        <button class="rating-btn ${getLastRating(kw)==='mid'?'selected-mid':''}" onclick="quickToggleRating('${kwEsc}', 'mid', this)">&#x2796;</button>
+        <button class="rating-btn ${getLastRating(kw)==='bad'?'selected-bad':''}" onclick="quickToggleRating('${kwEsc}', 'bad', this)">&#x274C;</button>
       </div>
       <div class="comment-form">
-        <input name="author" placeholder="İsmin" />
+        <input name="author" placeholder="Ismin" />
         <input name="text" placeholder="Yorum yaz... (opsiyonel)" />
-        <button onclick="submitComment('${kwEsc}', this)">Gönder</button>
+        <button onclick="submitComment('${kwEsc}', this)">Gonder</button>
       </div>
     `;
   }
-
   async function submitComment(kw, btn) {
     const form = btn.closest(".comment-form");
     const author = form.querySelector("[name=author]").value;
     const text = form.querySelector("[name=text]").value;
     const rating = selectedRatings[kw] || null;
-    if (!author.trim()) { alert('İsmini yaz!'); return; }
-    btn.disabled = true;
-    btn.textContent = "...";
+    if (!author.trim()) { alert('Ismini yaz!'); return; }
+    btn.disabled = true; btn.textContent = "...";
     await addComment(kw, author, text, rating);
     selectedRatings[kw] = null;
-    btn.disabled = false;
-    btn.textContent = "Gönder";
-    // Paneli kapat
+    btn.disabled = false; btn.textContent = "Gonder";
     const id = "cp_" + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,"");
     const panel = document.getElementById(id);
     if (panel) panel.style.display = "none";
   }
 
-  async function load() {
-    try {
-      const r = await fetch(JSON_URL + "?t=" + Date.now());
-      const data = await r.json();
-      await loadComments();
+  // --- Tablo ---
+  function renderTable() {
+    const contentEl = document.getElementById('content');
+    const searchTerm = document.getElementById('search').value.toLowerCase().trim();
 
-      document.getElementById('last-kw').textContent = data.length > 0 ? data[data.length-1].keyword : '—';
-      document.getElementById('updated').textContent = 'Son yenileme: ' + new Date().toLocaleTimeString('tr-TR');
+    let filtered = oppData.filter(o => !isJunk(o.keyword));
 
-      if (data.length === 0) {
-        document.getElementById('content').innerHTML = '<div class="empty">Henüz fırsat bulunamadı...</div>';
-        return;
-      }
+    if (currentFilter === 'all') {
+      filtered = filtered.filter(o => getLastRating(o.keyword) !== 'bad');
+    } else if (currentFilter === 'new') {
+      filtered = filtered.filter(o => isNewKeyword(o.keyword));
+    } else if (currentFilter === 'has-feedback') {
+      filtered = filtered.filter(o => (allComments[o.keyword] || []).length > 0 && getLastRating(o.keyword) !== 'bad');
+    } else {
+      const target = currentFilter === 'none' ? null : currentFilter;
+      filtered = filtered.filter(o => getLastRating(o.keyword) === target);
+    }
 
-      const filtered = [...data].reverse().filter(o => getLastRating(o.keyword) !== 'bad');
-      // Yorumsuzlar önce, yorumlular sona
+    if (searchTerm) {
+      filtered = filtered.filter(o => o.keyword.toLowerCase().includes(searchTerm));
+    }
+
+    if (sortCol === 'newest') {
+      // JSON sirasina gore ters = yeniden eskiye
+      const indexMap = {};
+      oppData.forEach((o, i) => { indexMap[o.keyword] = i; });
+      filtered.sort((a, b) => (indexMap[b.keyword] || 0) - (indexMap[a.keyword] || 0));
+    } else if (sortCol) {
+      filtered.sort((a, b) => {
+        let va, vb;
+        if (sortCol === 'keyword') { va = a.keyword.toLowerCase(); vb = b.keyword.toLowerCase(); }
+        else if (sortCol === 'product_count') { va = a.product_count; vb = b.product_count; }
+        else if (sortCol === 'avg_price') { va = parseFloat(String(a.avg_price).replace('$','')); vb = parseFloat(String(b.avg_price).replace('$','')); }
+        else if (sortCol === 'opp_count') { va = a.opportunity_count; vb = b.opportunity_count; }
+        else if (sortCol === 'ratio') { va = parseFloat(a.ratio); vb = parseFloat(b.ratio); }
+        if (va < vb) return sortDir === 'asc' ? -1 : 1;
+        if (va > vb) return sortDir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    } else {
+      filtered = [...filtered].reverse();
       filtered.sort((a, b) => {
         const aHas = (allComments[a.keyword] || []).length > 0 ? 1 : 0;
         const bHas = (allComments[b.keyword] || []).length > 0 ? 1 : 0;
         return aHas - bHas;
       });
-      document.getElementById('total').textContent = filtered.length;
+    }
 
-      const rows = filtered.map(o => {
-        const id = btoa(unescape(encodeURIComponent(o.keyword))).replace(/=/g,"");
-        const commentCount = (allComments[o.keyword] || []).length;
-        const lastRating = getLastRating(o.keyword);
-        return `
-          <tr>
-            <td class="kw">
-              <div class="kw-row">
-                <a href="https://www.amazon.com/s?k=${encodeURIComponent(o.keyword)}" target="_blank" style="color:#58a6ff;text-decoration:none;">${o.keyword}</a>
-                <span id="dot_${id}">${ratingDot(lastRating)}</span>
+    if (filtered.length === 0) {
+      contentEl.innerHTML = '<div class="empty">Gosterilecek firsat yok...</div>';
+      return;
+    }
+
+    function renderRow(o) {
+      const id = btoa(unescape(encodeURIComponent(o.keyword))).replace(/=/g,"");
+      const commentCount = (allComments[o.keyword] || []).length;
+      const lastRating = getLastRating(o.keyword);
+      const kwEsc = o.keyword.replace(/'/g,"\\'");
+      const isNew = isNewKeyword(o.keyword);
+      const note = allNotes[o.keyword];
+      const hasNote = note && note.content;
+      return `
+        <tr>
+          <td class="kw">
+            <div class="kw-row">
+              <span>${o.keyword}</span>
+              <span id="dot_${id}">${ratingDot(lastRating)}</span>
+              ${isNew ? '<span class="new-badge">YENI</span>' : ''}
+              <span class="amz-link" onclick="event.stopPropagation();window.open('https://www.amazon.com/s?k=${encodeURIComponent(o.keyword)}','amzPreview','width=1000,height=700,scrollbars=yes')" title="Amazon'da onizle">&#x1F50D;</span>
+            </div>
+            <button class="comment-btn" onclick="toggleComments('${kwEsc}'); renderCommentPanel('${kwEsc}')">
+              Feedback${commentCount > 0 ? ' (' + commentCount + ')' : ''}
+            </button>
+            <button class="notes-btn" onclick="toggleNotes('${kwEsc}')">
+              ${hasNote ? '&#x1F4DD; Not var' : '&#x1F4DD; Not'}
+            </button>
+            <div class="comment-panel" id="cp_${id}"></div>
+            <div class="notes-panel" id="np_${id}">
+              <textarea class="notes-textarea" placeholder="Supplier linki, maliyet tahmini, notlar...">${hasNote ? note.content : ''}</textarea>
+              <button class="notes-save" onclick="saveNote('${kwEsc}', this)">Kaydet</button>
+              <span class="notes-saved">Kaydedildi!</span>
+            </div>
+          </td>
+          <td>${o.product_count}</td>
+          <td class="price">${o.avg_price}</td>
+          <td>${o.opportunity_count}</td>
+          <td class="ratio">${o.ratio}</td>
+          <td><span class="badge">&#x2705; GIRILEBILIR</span></td>
+        </tr>
+      `;
+    }
+
+    const theadHTML = `
+      <thead>
+        <tr>
+          <th class="sortable" onclick="setSort('keyword')">Keyword ${sortArrow('keyword')}
+            <span style="margin-left:8px;font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;${sortCol==='newest'?'background:var(--purple);color:#fff;':'background:var(--bg2);color:var(--text3);'}" onclick="event.stopPropagation();setSort('newest')">Yeni&#x2192;Eski</span>
+          </th>
+          <th class="sortable" onclick="setSort('product_count')">Urun ${sortArrow('product_count')}</th>
+          <th class="sortable" onclick="setSort('avg_price')">Ort. Fiyat ${sortArrow('avg_price')}</th>
+          <th class="sortable" onclick="setSort('opp_count')">Uygun ${sortArrow('opp_count')}</th>
+          <th class="sortable" onclick="setSort('ratio')">Oran ${sortArrow('ratio')}</th>
+          <th>Durum</th>
+        </tr>
+      </thead>`;
+
+    if (groupMode) {
+      const groups = groupKeywords(filtered);
+      const sortedGroups = Object.keys(groups).sort((a,b) => groups[b].length - groups[a].length);
+      let html = `<table>${theadHTML}<tbody>`;
+      sortedGroups.forEach(gName => {
+        const items = groups[gName];
+        const isOpen = openGroups.has(gName);
+        const displayName = gName === 'diger' ? 'Diger (tekil)' : gName;
+        html += `
+          <tr class="group-header" onclick="toggleGroup('${gName.replace(/'/g,"\\'")}')">
+            <td colspan="6">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span class="group-arrow ${isOpen ? 'open' : ''}">&#x25B6;</span>
+                <span class="group-name">${displayName}</span>
+                <span class="group-count">${items.length} keyword</span>
               </div>
-              <button class="comment-btn" onclick="toggleComments('${o.keyword.replace(/'/g,"\\'")}'); renderCommentPanel('${o.keyword.replace(/'/g,"\\'")}')">
-                Feedback${commentCount > 0 ? ' (' + commentCount + ')' : ''}
-              </button>
-              <div class="comment-panel" id="cp_${id}"></div>
             </td>
-            <td>${o.product_count}</td>
-            <td class="price">${o.avg_price}</td>
-            <td>${o.opportunity_count}</td>
-            <td class="ratio">${o.ratio}</td>
-            <td><span class="badge">✅ GİRİLEBİLİR</span></td>
           </tr>
         `;
-      }).join('');
-
-      document.getElementById('content').innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Keyword</th>
-              <th>Ürün Sayısı</th>
-              <th>Ort. Fiyat</th>
-              <th>Uygun Ürün</th>
-              <th>Oran</th>
-              <th>Durum</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      `;
-    } catch(e) {
-      document.getElementById('content').innerHTML = '<div class="empty">Veri yüklenemedi.</div>';
+        if (isOpen) {
+          items.forEach(o => { html += renderRow(o); });
+        }
+      });
+      html += '</tbody></table>';
+      contentEl.innerHTML = html;
+    } else {
+      const rows = filtered.map(o => renderRow(o)).join('');
+      contentEl.innerHTML = `<table>${theadHTML}<tbody>${rows}</tbody></table>`;
     }
   }
+
+  // --- Ana yukleme ---
+  async function load() {
+    try {
+      const r = await fetch(JSON_URL + "?t=" + Date.now());
+      oppData = await r.json();
+      await loadComments();
+      await loadNotes();
+      await loadTodos();
+      document.getElementById('updated').textContent = 'Son yenileme: ' + new Date().toLocaleTimeString('tr-TR');
+      updateStatCards();
+      renderTable();
+      renderTodos();
+      renderApprovedPanel();
+      renderFeedbackPanel();
+    } catch(e) {
+      document.getElementById('content').innerHTML = '<div class="empty">Veri yuklenemedi.</div>';
+    }
+  }
+
+  // Saatler
+  function updateClocks() {
+    const now = new Date();
+    const madrid = now.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const istanbul = now.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('clock-madrid').textContent = madrid;
+    document.getElementById('clock-istanbul').textContent = istanbul;
+  }
+  updateClocks();
+  setInterval(updateClocks, 1000);
 
   load();
   setInterval(load, 60000);
