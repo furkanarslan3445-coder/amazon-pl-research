@@ -14,10 +14,12 @@ def _make_session() -> requests.Session:
 
 _session = _make_session()
 _request_count = 0
+_consecutive_captchas = 0
 
 
 def _get(url: str):
-    global _session, _request_count
+    global _session, _request_count, _consecutive_captchas
+    import random, time
 
     # Session rotation
     if _request_count > 0 and _request_count % CONFIG["session_rotate_every"] == 0:
@@ -30,13 +32,16 @@ def _get(url: str):
 
         # CAPTCHA veya ban tespiti
         if r.status_code in (503, 429) or "captcha" in r.text.lower():
-            wait = __import__("random").randint(
-                CONFIG["captcha_wait_min"], CONFIG["captcha_wait_max"]
-            )
-            logger.warning(f"CAPTCHA/ban tespit edildi. {wait}s bekleniyor...")
-            __import__("time").sleep(wait)
+            _consecutive_captchas += 1
+            # Exponential backoff: her ardarda CAPTCHA'da bekleme katlanır
+            base = random.randint(CONFIG["captcha_wait_min"], CONFIG["captcha_wait_max"])
+            wait = min(base * (2 ** (_consecutive_captchas - 1)), 1800)  # max 30dk
+            logger.warning(f"CAPTCHA/ban tespit edildi ({_consecutive_captchas}. ardarda). {wait}s bekleniyor...")
+            _session = _make_session()  # her CAPTCHA'da session sıfırla
+            time.sleep(wait)
             return None
 
+        _consecutive_captchas = 0  # başarılı istek = sıfırla
         if r.status_code != 200:
             logger.error(f"HTTP {r.status_code}: {url}")
             return None
@@ -78,7 +83,7 @@ def search_keyword(keyword: str) -> dict:
     Amazon'da keyword ara, ilk sayfadaki ürün verilerini çek.
     Döndürür: {"keyword", "products": [...], "related_searches": [...]}
     """
-    url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}&i=kitchen"
+    url = f"https://www.amazon.com/s?k={keyword.replace(' ', '+')}"
     soup = _get(url)
 
     if soup is None:
