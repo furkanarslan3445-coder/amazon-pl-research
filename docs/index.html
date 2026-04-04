@@ -364,87 +364,6 @@
   }
   @keyframes newPulse { 0%,100%{opacity:1} 50%{opacity:.7} }
 
-  /* AI Skor badge */
-  .ai-score-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
-    cursor: pointer; border: none; font-family: 'Inter', sans-serif;
-    transition: transform .15s, box-shadow .15s; white-space: nowrap; flex-shrink: 0;
-  }
-  .ai-score-badge:hover { transform: scale(1.05); }
-  .ai-score-high { background: rgba(6,125,98,.25); color: var(--green-light); border: 1px solid rgba(6,125,98,.4); }
-  .ai-score-mid  { background: rgba(240,193,75,.2); color: var(--yellow); border: 1px solid rgba(240,193,75,.4); }
-  .ai-score-low  { background: rgba(204,12,57,.15); color: #e85d7f; border: 1px solid rgba(204,12,57,.3); }
-  .ai-score-loading { background: var(--bg2); color: var(--text3); border: 1px solid var(--border2); cursor: default; animation: newPulse 1.5s infinite; }
-  .ai-score-pending { background: var(--bg2); color: var(--orange); border: 1px solid rgba(255,153,0,.3); cursor: pointer; }
-
-  /* AI Analiz modal */
-  .ai-modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75);
-    z-index: 1000; align-items: center; justify-content: center; padding: 20px;
-  }
-  .ai-modal-overlay.open { display: flex; }
-  .ai-modal {
-    background: #161b22; border: 1px solid var(--border2); border-radius: 20px;
-    max-width: 780px; width: 100%; max-height: 85vh; display: flex; flex-direction: column;
-    box-shadow: 0 24px 80px rgba(0,0,0,.6);
-  }
-  .ai-modal-header {
-    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  }
-  .ai-modal-kw { font-size: 16px; font-weight: 700; color: var(--orange); }
-  .ai-modal-score { font-size: 22px; font-weight: 800; }
-  .ai-modal-close {
-    background: none; border: none; color: var(--text3); font-size: 22px;
-    cursor: pointer; padding: 2px 8px; border-radius: 8px; transition: background .15s;
-  }
-  .ai-modal-close:hover { background: rgba(255,255,255,.08); color: var(--text); }
-  .ai-modal-body {
-    overflow-y: auto; padding: 20px 24px; font-size: 13px; line-height: 1.75;
-    color: var(--text2);
-  }
-  .ai-modal-body h2 { font-size: 14px; font-weight: 700; color: var(--orange); margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-  .ai-modal-body h3 { font-size: 13px; font-weight: 600; color: var(--text); margin: 12px 0 4px; }
-  .ai-modal-body li { margin-bottom: 4px; color: var(--text2); }
-  .ai-modal-body strong { color: var(--text); }
-  .ai-modal-body p { margin: 4px 0; }
-
-  /* API Key butonu */
-  .apikey-btn {
-    background: var(--glass); border: 1px solid var(--border2); color: var(--text3);
-    padding: 5px 11px; border-radius: 8px; font-size: 12px; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-weight: 600; transition: all .2s;
-  }
-  .apikey-btn:hover { border-color: var(--orange); color: var(--orange); }
-  .apikey-btn.has-key { color: var(--green-light); border-color: rgba(6,125,98,.4); }
-
-  /* API Key modal */
-  .apikey-modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7);
-    z-index: 2000; align-items: center; justify-content: center; padding: 20px;
-  }
-  .apikey-modal-overlay.open { display: flex; }
-  .apikey-modal {
-    background: #161b22; border: 1px solid var(--border2); border-radius: 16px;
-    width: 100%; max-width: 440px; padding: 28px;
-  }
-  .apikey-modal h3 { margin: 0 0 8px; color: var(--text); font-size: 16px; }
-  .apikey-modal p { margin: 0 0 16px; color: var(--text3); font-size: 13px; line-height: 1.5; }
-  .apikey-modal input {
-    width: 100%; background: var(--bg2); border: 1px solid var(--border2);
-    color: var(--text); padding: 10px 14px; border-radius: 8px; font-size: 13px;
-    font-family: 'Inter', sans-serif; outline: none; box-sizing: border-box; margin-bottom: 12px;
-  }
-  .apikey-modal input:focus { border-color: var(--orange); }
-  .apikey-modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
-  .apikey-modal-btns button {
-    padding: 8px 18px; border-radius: 8px; font-size: 13px; cursor: pointer;
-    font-family: 'Inter', sans-serif; font-weight: 600; border: none;
-  }
-  .btn-save { background: var(--orange); color: #131921; }
-  .btn-cancel { background: var(--bg2); color: var(--text2); border: 1px solid var(--border2) !important; }
-
   /* Not defteri */
   .notes-btn {
     background: var(--glass); border: 1px solid var(--border2); color: var(--blue-light);
@@ -524,39 +443,11 @@
         AKP %31.5
       </div>
     </div>
-    <button class="apikey-btn" id="apikey-btn" onclick="showApiKeyModal()" title="Anthropic API Key ayarla">&#x1F511; API Key</button>
     <div class="live-dot" title="Bot aktif calisiyor"></div>
     <span class="updated" id="updated"></span>
   </div>
 </header>
 
-<!-- API Key Modal -->
-<div class="apikey-modal-overlay" id="apikey-modal-overlay" onclick="if(event.target===this)closeApiKeyModal()">
-  <div class="apikey-modal">
-    <h3>&#x1F511; Anthropic API Key</h3>
-    <p>console.anthropic.com adresinden aldığın API key'i gir. Tarayıcında saklanır, sunucuya gönderilmez.</p>
-    <input type="password" id="apikey-input" placeholder="sk-ant-..." />
-    <div class="apikey-modal-btns">
-      <button class="btn-cancel" onclick="closeApiKeyModal()">İptal</button>
-      <button class="btn-save" onclick="saveApiKey()">Kaydet</button>
-    </div>
-  </div>
-</div>
-
-<!-- AI Analiz Modal -->
-<div class="ai-modal-overlay" id="ai-modal-overlay" onclick="if(event.target===this)closeAiModal()">
-  <div class="ai-modal">
-    <div class="ai-modal-header">
-      <div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">AI ANALİZ</div>
-        <div class="ai-modal-kw" id="ai-modal-kw"></div>
-      </div>
-      <div class="ai-modal-score" id="ai-modal-score"></div>
-      <button class="ai-modal-close" onclick="closeAiModal()">&times;</button>
-    </div>
-    <div class="ai-modal-body" id="ai-modal-body"></div>
-  </div>
-</div>
 
 <div class="stats">
   <div class="card c-blue" title="Cop veriler ve reddedilenler haric toplam firsat sayisi">
@@ -988,16 +879,6 @@
 
     list.innerHTML = approvedKws.map(o => {
       const kwEsc = o.keyword.replace(/'/g,"\\'");
-      const cache = getAnalysisCache(o.keyword);
-      let scoreBadge;
-      if (cache) {
-        const cls = cache.score >= 7 ? 'ai-score-high' : cache.score >= 5 ? 'ai-score-mid' : 'ai-score-low';
-        scoreBadge = `<button class="ai-score-badge ${cls}" onclick="event.stopPropagation();showAiModal('${kwEsc}')" title="AI analizini gör">🤖 ${cache.score}/10</button>`;
-      } else if (getApiKey()) {
-        scoreBadge = `<button class="ai-score-badge ai-score-pending" id="ai-btn-${btoa(unescape(encodeURIComponent(o.keyword))).replace(/=/g,'')}" onclick="event.stopPropagation();triggerAnalysis('${kwEsc}', this)" title="Analiz et">🤖 Analiz Et</button>`;
-      } else {
-        scoreBadge = `<button class="ai-score-badge ai-score-pending" onclick="event.stopPropagation();showApiKeyModal()" title="API Key gerekli">🤖 Key Ekle</button>`;
-      }
       return `
         <div class="approved-item" onclick="scrollToKeyword('${kwEsc}')">
           <span class="ap-kw">${o.keyword}</span>
@@ -1005,13 +886,9 @@
           <span class="ap-price">${o.avg_price}</span>
           <span class="ap-ratio">${o.ratio}</span>
           <span class="ap-comment">${o.comment}</span>
-          ${scoreBadge}
         </div>
       `;
     }).join('');
-
-    // API key varsa cache'i olmayan keyword'leri sıraya koy
-    if (getApiKey()) queueAnalyses(approvedKws.map(o => o.keyword));
   }
 
   // --- Son feedbackler paneli ---
@@ -1311,175 +1188,6 @@
     }
   }
 
-  // ===================== AI ANALİZ =====================
-  const AI_SYSTEM_PROMPT = `Sen Amazon Private Label (PL) konusunda 10+ yıl deneyimli uzman bir ürün araştırma danışmanısın.
-Kullanıcı sana bir anahtar kelime veya ürün verdiğinde şu başlıklar altında analiz yap:
-
-## 🔍 Pazar Genel Bakış
-## 🚀 Ürün Geliştirme & Yenilik Fırsatları
-## ⚔️ Rakiplerin Önüne Geçme Stratejileri
-## 📦 Ürün Farklılaştırma Önerileri
-## ⚠️ Dikkat Edilmesi Gerekenler
-## 💡 Aksiyon Planı
-
-Somut ve uygulanabilir öneriler ver. Türkçe yanıt ver.
-Analizinin en sonuna, başka bir şey eklemeden, tam olarak şu formatı kullan:
-SKOR: X.X/10`;
-
-  const AI_CACHE_KEY = 'pl_ai_cache_v1';
-  const AI_QUEUE_KEY = 'pl_ai_queue';
-  let aiAnalyzing = false;
-  let aiQueue = [];
-
-  function getApiKey() {
-    return localStorage.getItem('pl_api_key') || '';
-  }
-
-  function getAnalysisCache(kw) {
-    try {
-      const cache = JSON.parse(localStorage.getItem(AI_CACHE_KEY) || '{}');
-      return cache[kw] || null;
-    } catch { return null; }
-  }
-
-  function setAnalysisCache(kw, data) {
-    try {
-      const cache = JSON.parse(localStorage.getItem(AI_CACHE_KEY) || '{}');
-      cache[kw] = data;
-      localStorage.setItem(AI_CACHE_KEY, JSON.stringify(cache));
-    } catch(e) {}
-  }
-
-  async function analyzeKeyword(kw) {
-    const apiKey = getApiKey();
-    if (!apiKey) return null;
-    const response = await fetch('/api/analyze', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ keyword: kw, apiKey }),
-    });
-    if (!response.ok) throw new Error(`API hatası: ${response.status}`);
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
-    return { score: data.score, analysis: data.analysis, date: new Date().toISOString() };
-  }
-
-  function queueAnalyses(keywords) {
-    const toAnalyze = keywords.filter(kw => !getAnalysisCache(kw));
-    toAnalyze.forEach(kw => { if (!aiQueue.includes(kw)) aiQueue.push(kw); });
-    if (!aiAnalyzing) processQueue();
-  }
-
-  async function processQueue() {
-    if (aiQueue.length === 0) { aiAnalyzing = false; return; }
-    aiAnalyzing = true;
-    const kw = aiQueue.shift();
-    const id = 'ai-btn-' + btoa(unescape(encodeURIComponent(kw))).replace(/=/g,'');
-    const btn = document.getElementById(id);
-    if (btn) { btn.className = 'ai-score-badge ai-score-loading'; btn.textContent = '🤖 ...'; }
-    try {
-      const result = await analyzeKeyword(kw);
-      if (result) {
-        setAnalysisCache(kw, result);
-        if (btn) {
-          const cls = result.score >= 7 ? 'ai-score-high' : result.score >= 5 ? 'ai-score-mid' : 'ai-score-low';
-          const kwEsc = kw.replace(/'/g,"\\'");
-          btn.className = `ai-score-badge ${cls}`;
-          btn.textContent = `🤖 ${result.score}/10`;
-          btn.setAttribute('onclick', `event.stopPropagation();showAiModal('${kwEsc}')`);
-          btn.title = 'AI analizini gör';
-          btn.id = '';
-        }
-      }
-    } catch(e) {
-      if (btn) { btn.className = 'ai-score-badge ai-score-pending'; btn.textContent = '🤖 Hata'; }
-    }
-    // Rate limit için 3sn bekle
-    setTimeout(processQueue, 3000);
-  }
-
-  async function triggerAnalysis(kw, btn) {
-    btn.className = 'ai-score-badge ai-score-loading';
-    btn.textContent = '🤖 ...';
-    try {
-      const result = await analyzeKeyword(kw);
-      if (result) {
-        setAnalysisCache(kw, result);
-        const cls = result.score >= 7 ? 'ai-score-high' : result.score >= 5 ? 'ai-score-mid' : 'ai-score-low';
-        const kwEsc = kw.replace(/'/g,"\\'");
-        btn.className = `ai-score-badge ${cls}`;
-        btn.textContent = `🤖 ${result.score}/10`;
-        btn.setAttribute('onclick', `event.stopPropagation();showAiModal('${kwEsc}')`);
-        btn.title = 'AI analizini gör';
-        btn.id = '';
-      }
-    } catch(e) {
-      btn.className = 'ai-score-badge ai-score-pending';
-      btn.textContent = '🤖 Hata';
-    }
-  }
-
-  function renderMarkdownSimple(text) {
-    return text
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/^- (.+)$/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
-      .replace(/\n\n/g, '<br>')
-      .replace(/\n/g, '\n');
-  }
-
-  function showAiModal(kw) {
-    const cache = getAnalysisCache(kw);
-    if (!cache) return;
-    document.getElementById('ai-modal-kw').textContent = kw;
-    const cls = cache.score >= 7 ? 'color:var(--green-light)' : cache.score >= 5 ? 'color:var(--yellow)' : 'color:#e85d7f';
-    document.getElementById('ai-modal-score').innerHTML = `<span style="${cls}">${cache.score}/10</span>`;
-    document.getElementById('ai-modal-body').innerHTML = renderMarkdownSimple(cache.analysis);
-    document.getElementById('ai-modal-overlay').classList.add('open');
-  }
-
-  function closeAiModal() {
-    document.getElementById('ai-modal-overlay').classList.remove('open');
-  }
-
-  function showApiKeyModal() {
-    const existing = getApiKey();
-    document.getElementById('apikey-input').value = existing;
-    document.getElementById('apikey-modal-overlay').classList.add('open');
-  }
-
-  function closeApiKeyModal() {
-    document.getElementById('apikey-modal-overlay').classList.remove('open');
-  }
-
-  function saveApiKey() {
-    const key = document.getElementById('apikey-input').value.trim();
-    if (key) {
-      localStorage.setItem('pl_api_key', key);
-      document.getElementById('apikey-btn').classList.add('has-key');
-      document.getElementById('apikey-btn').textContent = '✅ API Key';
-    } else {
-      localStorage.removeItem('pl_api_key');
-      document.getElementById('apikey-btn').classList.remove('has-key');
-      document.getElementById('apikey-btn').textContent = '🔑 API Key';
-    }
-    closeApiKeyModal();
-    renderApprovedPanel();
-  }
-
-  // ESC ile modal kapat
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeAiModal(); closeApiKeyModal(); }
-  });
-
-  // Sayfa yuklenince API key durumunu guncelle
-  if (getApiKey()) {
-    document.getElementById('apikey-btn').classList.add('has-key');
-    document.getElementById('apikey-btn').textContent = '✅ API Key';
-  }
-  // ===================== AI ANALİZ SON =====================
 
   // --- Ana yukleme ---
   async function load() {
