@@ -3,7 +3,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { keyword, apiKey } = req.body;
+  const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+  const { keyword, apiKey } = body;
   if (!keyword || !apiKey) {
     return res.status(400).json({ error: 'keyword ve apiKey gerekli' });
   }
