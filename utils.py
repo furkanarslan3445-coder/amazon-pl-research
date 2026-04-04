@@ -39,7 +39,7 @@ def get_headers() -> dict:
         "Upgrade-Insecure-Requests": "1",
         "Cache-Control":   "max-age=0",
         "DNT":             "1",
-        "Cookie":          "i18n-prefs=USD; lc-main=en_US",
+        "Cookie":          "i18n-prefs=USD; lc-main=en_US; x-main=; GLI=eyJ6aXAiOiI5MDAwMSIsImNvdW50cnkiOiJVUyIsInN0YXRlSWQiOiJDQSIsImNpdHkiOiJMb3MgQW5nZWxlcyJ9",
     }
 
 
