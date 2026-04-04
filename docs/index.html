@@ -1353,28 +1353,15 @@ SKOR: X.X/10`;
   async function analyzeKeyword(kw) {
     const apiKey = getApiKey();
     if (!apiKey) return null;
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/analyze', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-allow-browser': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
-        system: AI_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: `Amazon PL analizi yap: "${kw}"` }],
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: kw, apiKey }),
     });
     if (!response.ok) throw new Error(`API hatası: ${response.status}`);
     const data = await response.json();
-    const text = data.content?.map(b => b.type === 'text' ? b.text : '').join('') || '';
-    const scoreMatch = text.match(/SKOR:\s*(\d+(?:\.\d+)?)\/10/i);
-    const score = scoreMatch ? parseFloat(scoreMatch[1]) : null;
-    const analysis = text.replace(/SKOR:\s*\d+(?:\.\d+)?\/10/gi, '').trim();
-    return { score, analysis, date: new Date().toISOString() };
+    if (data.error) throw new Error(data.error);
+    return { score: data.score, analysis: data.analysis, date: new Date().toISOString() };
   }
 
   function queueAnalyses(keywords) {
