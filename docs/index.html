@@ -668,6 +668,25 @@
     return idx >= totalLen * 0.85;
   }
 
+  // --- Grubu toplu reddet ---
+  async function rejectGroup(gName) {
+    const groups = groupKeywords(oppData.filter(o => !isJunk(o.keyword)));
+    const items = groups[gName];
+    if (!items || items.length === 0) return;
+    const author = prompt(`"${gName}" grubundaki ${items.length} keyword reddedilecek. İsmin:`);
+    if (!author || !author.trim()) return;
+    for (const o of items) {
+      if (getLastRating(o.keyword) === 'bad') continue;
+      await sb.from("comments").insert({
+        keyword: o.keyword, author: author.trim(), comment: 'Grup toplu red', rating: 'bad'
+      });
+    }
+    await loadComments();
+    updateStatCards();
+    renderTable();
+    renderFeedbackPanel();
+  }
+
   // --- Gruplama ---
   function toggleGroupMode() {
     groupMode = !groupMode;
@@ -1179,13 +1198,16 @@
         const items = groups[gName];
         const isOpen = openGroups.has(gName);
         const displayName = gName === 'diger' ? 'Diger (tekil)' : gName;
+        const gNameEsc = gName.replace(/'/g,"\\'");
+        const kwListJson = JSON.stringify(items.map(o => o.keyword)).replace(/'/g,"\\'");
         html += `
-          <tr class="group-header" onclick="toggleGroup('${gName.replace(/'/g,"\\'")}')">
+          <tr class="group-header" onclick="toggleGroup('${gNameEsc}')">
             <td colspan="6">
               <div style="display:flex;align-items:center;gap:10px">
                 <span class="group-arrow ${isOpen ? 'open' : ''}">&#x25B6;</span>
                 <span class="group-name">${displayName}</span>
                 <span class="group-count">${items.length} keyword</span>
+                <button onclick="event.stopPropagation();rejectGroup('${gNameEsc}')" style="margin-left:auto;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;background:rgba(204,12,57,.15);color:#e85d7f;border:1px solid rgba(204,12,57,.3);cursor:pointer;font-family:'Inter',sans-serif;" title="Gruptaki tum keyword'leri reddet">&#x274C; Grubu Reddet</button>
               </div>
             </td>
           </tr>
